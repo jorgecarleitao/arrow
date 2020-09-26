@@ -27,6 +27,8 @@ use crate::{error::Result, scalar::ScalarValue};
 use arrow::datatypes::{DataType, Schema, SchemaRef};
 use arrow::record_batch::{RecordBatch, RecordBatchReader};
 use arrow::{array::ArrayRef, datatypes::Field};
+pub use part::PartIterator;
+pub mod part;
 
 use async_trait::async_trait;
 type SendableRecordBatchReader = Box<dyn RecordBatchReader + Send>;
@@ -85,6 +87,15 @@ impl Partitioning {
         match self {
             UnknownPartitioning(n) => *n,
         }
+    }
+}
+
+impl<'a> IntoIterator for &'a dyn ExecutionPlan {
+    type Item = Result<SendableRecordBatchReader>;
+    type IntoIter = PartIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PartIterator::new(self)
     }
 }
 
