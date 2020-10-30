@@ -2133,7 +2133,7 @@ impl From<(Vec<(Field, ArrayRef)>, Buffer, usize)> for StructArray {
 /// ```
 pub struct DictionaryArray<K: ArrowPrimitiveType> {
     /// Array of keys, stored as a PrimitiveArray<K>.
-    data: ArrayDataRef,
+    data: PrimitiveArray<K>,
 
     /// Pointer to the key values.
     raw_values: RawPtrBox<K::Native>,
@@ -2153,19 +2153,15 @@ enum Draining {
 }
 
 #[derive(Debug)]
-pub struct NullableIter<'a, T> {
-    data: &'a ArrayDataRef, // TODO: Use a pointer to the null bitmap.
-    ptr: *const T,
+pub struct NullableIter<'a, T: ArrowPrimitiveType> {
+    data: &'a PrimitiveArray<T>,
     i: usize,
     len: usize,
     draining: Draining,
 }
 
-impl<'a, T> std::iter::Iterator for NullableIter<'a, T>
-where
-    T: Clone,
-{
-    type Item = Option<T>;
+impl<'a, T: ArrowPrimitiveType> std::iter::Iterator for NullableIter<'a, T> {
+    type Item = Option<T::Native>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let i = self.i;
@@ -2176,7 +2172,7 @@ where
             Some(None)
         } else {
             self.i += 1;
-            unsafe { Some(Some((&*self.ptr.add(i)).clone())) }
+            Some(Some(self.data.value(i)))
         }
     }
 
@@ -2194,14 +2190,14 @@ where
             Some(None)
         } else {
             self.i += n + 1;
-            unsafe { Some(Some((&*self.ptr.add(i + n)).clone())) }
+            Some(Some(self.data.value(i + n)))
         }
     }
 }
 
 impl<'a, T> std::iter::DoubleEndedIterator for NullableIter<'a, T>
 where
-    T: Clone,
+    T: ArrowNumericType,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         match self.draining {
@@ -2224,11 +2220,11 @@ where
                     match i.checked_sub(1) {
                         Some(idx) => {
                             self.i = idx;
-                            unsafe { Some(Some((&*self.ptr.add(i)).clone())) }
+                            Some(Some(self.data.value(i)))
                         }
                         _ => {
                             self.draining = Draining::Finished;
-                            unsafe { Some(Some((&*self.ptr).clone())) }
+                            Some(Some(self.data.value(0)))
                         }
                     }
                 }
@@ -2243,10 +2239,9 @@ where
 
 impl<'a, K: ArrowPrimitiveType> DictionaryArray<K> {
     /// Return an iterator to the keys of this dictionary.
-    pub fn keys(&self) -> NullableIter<'_, K::Native> {
-        NullableIter::<'_, K::Native> {
+    pub fn keys(&self) -> NullableIter<'_, K> {
+        NullableIter::<'_, K> {
             data: &self.data,
-            ptr: unsafe { self.raw_values.get().add(self.data.offset()) },
             i: 0,
             len: self.data.len(),
             draining: Draining::Ready,
@@ -2324,7 +2319,7 @@ impl<T: ArrowPrimitiveType> From<ArrayDataRef> for DictionaryArray<T> {
         let values = make_array(data.child_data()[0].clone());
         if let DataType::Dictionary(_, _) = dtype {
             Self {
-                data,
+                data: PrimitiveArray::<T>::from(data),
                 raw_values: RawPtrBox::new(raw_values as *const T::Native),
                 values,
                 is_ordered: false,
@@ -2389,11 +2384,11 @@ impl<T: ArrowPrimitiveType> Array for DictionaryArray<T> {
     }
 
     fn data(&self) -> ArrayDataRef {
-        self.data.clone()
+        self.data.data()
     }
 
     fn data_ref(&self) -> &ArrayDataRef {
-        &self.data
+        self.data.data_ref()
     }
 
     /// Returns the total number of bytes of memory occupied by the buffers owned by this [DictionaryArray].
