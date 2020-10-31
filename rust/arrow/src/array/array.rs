@@ -2145,107 +2145,10 @@ pub struct DictionaryArray<K: ArrowPrimitiveType> {
     is_ordered: bool,
 }
 
-#[derive(Debug)]
-enum Draining {
-    Ready,
-    Iterating,
-    Finished,
-}
-
-#[derive(Debug)]
-pub struct NullableIter<'a, T: ArrowPrimitiveType> {
-    data: &'a PrimitiveArray<T>,
-    i: usize,
-    len: usize,
-    draining: Draining,
-}
-
-impl<'a, T: ArrowPrimitiveType> std::iter::Iterator for NullableIter<'a, T> {
-    type Item = Option<T::Native>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let i = self.i;
-        if i >= self.len {
-            None
-        } else if self.data.is_null(i) {
-            self.i += 1;
-            Some(None)
-        } else {
-            self.i += 1;
-            Some(Some(self.data.value(i)))
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.len, Some(self.len))
-    }
-
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        let i = self.i;
-        if i + n >= self.len {
-            self.i = self.len;
-            None
-        } else if self.data.is_null(i + n) {
-            self.i += n + 1;
-            Some(None)
-        } else {
-            self.i += n + 1;
-            Some(Some(self.data.value(i + n)))
-        }
-    }
-}
-
-impl<'a, T> std::iter::DoubleEndedIterator for NullableIter<'a, T>
-where
-    T: ArrowNumericType,
-{
-    fn next_back(&mut self) -> Option<Self::Item> {
-        match self.draining {
-            Draining::Ready => {
-                self.draining = Draining::Iterating;
-                self.i = self.len - 1;
-                self.next_back()
-            }
-            Draining::Iterating => {
-                let i = self.i;
-                if i >= self.len {
-                    None
-                } else if self.data.is_null(i) {
-                    self.i = self.i.checked_sub(1).unwrap_or_else(|| {
-                        self.draining = Draining::Finished;
-                        0_usize
-                    });
-                    Some(None)
-                } else {
-                    match i.checked_sub(1) {
-                        Some(idx) => {
-                            self.i = idx;
-                            Some(Some(self.data.value(i)))
-                        }
-                        _ => {
-                            self.draining = Draining::Finished;
-                            Some(Some(self.data.value(0)))
-                        }
-                    }
-                }
-            }
-            Draining::Finished => {
-                self.draining = Draining::Ready;
-                None
-            }
-        }
-    }
-}
-
 impl<'a, K: ArrowPrimitiveType> DictionaryArray<K> {
     /// Return an iterator to the keys of this dictionary.
-    pub fn keys(&self) -> NullableIter<'_, K> {
-        NullableIter::<'_, K> {
-            data: &self.data,
-            i: 0,
-            len: self.data.len(),
-            draining: Draining::Ready,
-        }
+    pub fn keys(&self) -> PrimitiveIter<'_, K> {
+        PrimitiveIter::<'_, K>::new(&self.data)
     }
 
     /// Returns an array view of the keys of this dictionary
