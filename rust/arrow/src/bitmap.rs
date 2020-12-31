@@ -18,7 +18,7 @@
 //! Defines a bitmap, which is used to track which values in an Arrow array are null.
 //! This is called a "validity bitmap" in the Arrow documentation.
 
-use crate::buffer::Buffer;
+use crate::buffer::{Buffer, MutableBuffer};
 use crate::error::Result;
 use crate::util::bit_util;
 use std::mem;
@@ -40,7 +40,7 @@ impl Bitmap {
             num_bytes + 64 - r
         };
         Bitmap {
-            bits: Buffer::from(&vec![0xFF; len]),
+            bits: MutableBuffer::new(len).with_bitset(len, false).into(),
         }
     }
 

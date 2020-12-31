@@ -100,19 +100,19 @@ impl<OffsetSize: BinaryOffsetSizeTrait> GenericBinaryArray<OffsetSize> {
 
     /// Creates a [GenericBinaryArray] from a vector of byte slices
     pub fn from_vec(v: Vec<&[u8]>) -> Self {
-        let mut offsets = Vec::with_capacity(v.len() + 1);
-        let mut values = Vec::new();
+        let mut offsets = MutableBuffer::new(v.len() + 1);
+        let mut values = MutableBuffer::new(0);
         let mut length_so_far: OffsetSize = OffsetSize::zero();
-        offsets.push(length_so_far);
+        offsets.extend_from_slice(length_so_far.to_byte_slice());
         for s in &v {
             length_so_far = length_so_far + OffsetSize::from_usize(s.len()).unwrap();
-            offsets.push(length_so_far);
+            offsets.extend_from_slice(length_so_far.to_byte_slice());
             values.extend_from_slice(s);
         }
         let array_data = ArrayData::builder(OffsetSize::DATA_TYPE)
             .len(v.len())
-            .add_buffer(Buffer::from(offsets.to_byte_slice()))
-            .add_buffer(Buffer::from(&values[..]))
+            .add_buffer(offsets.into())
+            .add_buffer(values.into())
             .build();
         GenericBinaryArray::<OffsetSize>::from(array_data)
     }
@@ -225,8 +225,10 @@ where
         let (_, data_len) = iter.size_hint();
         let data_len = data_len.expect("Iterator must be sized"); // panic if no upper bound.
 
-        let mut offsets = Vec::with_capacity(data_len + 1);
-        let mut values = Vec::new();
+        let mut offsets = MutableBuffer::with_capacity(
+            (data_len + 1) * std::mem::size_of::<OffsetSize>(),
+        );
+        let mut values = MutableBuffer::new(0);
         let mut null_buf = MutableBuffer::new_null(data_len);
         let mut length_so_far: OffsetSize = OffsetSize::zero();
         offsets.push(length_so_far);
@@ -249,9 +251,9 @@ where
 
         let array_data = ArrayData::builder(OffsetSize::DATA_TYPE)
             .len(data_len)
-            .add_buffer(Buffer::from(offsets.to_byte_slice()))
-            .add_buffer(Buffer::from(&values[..]))
-            .null_bit_buffer(null_buf.freeze())
+            .add_buffer(offsets.into())
+            .add_buffer(values.into())
+            .null_bit_buffer(null_buf.into())
             .build();
         Self::from(array_data)
     }

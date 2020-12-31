@@ -23,6 +23,7 @@ use packed_simd::u8x64;
 
 use crate::{
     bytes::{Bytes, Deallocation},
+    datatypes::ToByteSlice,
     ffi,
 };
 
@@ -660,6 +661,12 @@ impl Not for &Buffer {
     }
 }
 
+impl From<MutableBuffer> for Buffer {
+    fn from(buffer: MutableBuffer) -> Self {
+        buffer.freeze()
+    }
+}
+
 unsafe impl Sync for Buffer {}
 unsafe impl Send for Buffer {}
 
@@ -673,8 +680,13 @@ pub struct MutableBuffer {
 }
 
 impl MutableBuffer {
-    /// Allocate a new mutable buffer with initial capacity to be `capacity`.
+    /// Equal to `with_capacity`. To be deprecated and replaced by `new()`.
     pub fn new(capacity: usize) -> Self {
+        Self::with_capacity(capacity)
+    }
+
+    /// Allocate a new mutable buffer with initial capacity to be `capacity`.
+    pub fn with_capacity(capacity: usize) -> Self {
         let new_capacity = bit_util::round_upto_multiple_of_64(capacity);
         let ptr = memory::allocate_aligned(new_capacity);
         Self {
@@ -846,6 +858,12 @@ impl MutableBuffer {
             memory::memcpy(self.data.add(self.len), bytes.as_ptr(), bytes.len());
         }
         self.len = new_len;
+    }
+
+    /// Extends the buffer from a byte slice, incrementing its capacity if needed.
+    #[inline]
+    pub fn push<T: ToByteSlice>(&mut self, item: T) {
+        self.extend_from_slice(item.to_byte_slice())
     }
 
     /// Extends the buffer by `len` with all bytes equal to `0u8`, incrementing its capacity if needed.
