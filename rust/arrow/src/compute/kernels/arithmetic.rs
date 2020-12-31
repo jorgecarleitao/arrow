@@ -199,7 +199,7 @@ where
                     left.value(i) / right_value
                 }
             } else {
-                T::default_value()
+                T::Native::default()
             });
         }
     } else {

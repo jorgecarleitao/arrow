@@ -952,7 +952,7 @@ where
     for i in 0..from.len() {
         if from.is_null(i) {
             b.append_null()?;
-        } else if from.value(i) != T::default_value() {
+        } else if from.value(i) != T::Native::default() {
             b.append_value(true)?;
         } else {
             b.append_value(false)?;
@@ -988,7 +988,7 @@ where
                 // a workaround to cast a primitive to T::Native, infallible
                 num::cast::cast(1)
             } else {
-                Some(T::default_value())
+                Some(T::Native::default())
             }
         })
         .collect()

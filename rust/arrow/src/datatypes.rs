@@ -233,13 +233,6 @@ pub trait ArrowPrimitiveType: 'static {
     fn get_byte_width() -> usize {
         size_of::<Self::Native>()
     }
-
-    /// Returns a default value of this primitive type.
-    ///
-    /// This is useful for aggregate array ops like `sum()`, `mean()`.
-    fn default_value() -> Self::Native {
-        Default::default()
-    }
 }
 
 impl ArrowNativeType for bool {

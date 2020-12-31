@@ -125,7 +125,7 @@ where
             .iter()
             .fold(m[0], |max, item| if cmp(&max, item) { *item } else { max });
     } else {
-        n = T::default_value();
+        n = T::Native::default();
         let mut has_value = false;
         for (i, item) in m.iter().enumerate() {
             if data.is_valid(i) && (!has_value || cmp(&n, item)) {
@@ -206,14 +206,16 @@ where
 
     match array.data().null_buffer() {
         None => {
-            let sum = data.iter().fold(T::default_value(), |accumulator, value| {
-                accumulator + *value
-            });
+            let sum = data
+                .iter()
+                .fold(T::Native::default(), |accumulator, value| {
+                    accumulator + *value
+                });
 
             Some(sum)
         }
         Some(buffer) => {
-            let mut sum = T::default_value();
+            let mut sum = T::Native::default();
             let data_chunks = data.chunks_exact(64);
             let remainder = data_chunks.remainder();
 
