@@ -58,7 +58,7 @@ struct SlicesIterator<'a> {
 
 impl<'a> SlicesIterator<'a> {
     fn new(filter: &'a BooleanArray) -> Self {
-        let values = &filter.data_ref().buffers()[0];
+        let values = &filter.data().buffers()[0];
 
         // this operation is performed before iteration
         // because it is fast and allows reserving all the needed memory
@@ -223,8 +223,7 @@ pub fn build_filter(filter: &BooleanArray) -> Result<Filter> {
 pub fn filter(array: &Array, filter: &BooleanArray) -> Result<ArrayRef> {
     let iter = SlicesIterator::new(filter);
 
-    let mut mutable =
-        MutableArrayData::new(vec![array.data_ref()], false, iter.filter_count);
+    let mut mutable = MutableArrayData::new(vec![array.data()], false, iter.filter_count);
     iter.for_each(|(start, end)| mutable.extend(0, start, end));
     let data = mutable.freeze();
     Ok(make_array(Arc::new(data)))

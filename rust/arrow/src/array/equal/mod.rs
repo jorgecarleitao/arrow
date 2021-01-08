@@ -303,11 +303,11 @@ mod tests {
 
     #[test]
     fn test_null_equal() {
-        let a = NullArray::new(12).data();
-        let b = NullArray::new(12).data();
+        let a = NullArray::new(12).data().clone();
+        let b = NullArray::new(12).data().clone();
         test_equal(&a, &b, true);
 
-        let b = NullArray::new(10).data();
+        let b = NullArray::new(10).data().clone();
         test_equal(&a, &b, false);
 
         // Test the case where offset != 0
@@ -323,31 +323,41 @@ mod tests {
 
     #[test]
     fn test_boolean_equal() {
-        let a = BooleanArray::from(vec![false, false, true]).data();
-        let b = BooleanArray::from(vec![false, false, true]).data();
+        let a = BooleanArray::from(vec![false, false, true]).data().clone();
+        let b = BooleanArray::from(vec![false, false, true]).data().clone();
         test_equal(a.as_ref(), b.as_ref(), true);
 
-        let b = BooleanArray::from(vec![false, false, false]).data();
+        let b = BooleanArray::from(vec![false, false, false]).data().clone();
         test_equal(a.as_ref(), b.as_ref(), false);
 
         // Test the case where null_count > 0
 
-        let a = BooleanArray::from(vec![Some(false), None, None, Some(true)]).data();
-        let b = BooleanArray::from(vec![Some(false), None, None, Some(true)]).data();
+        let a = BooleanArray::from(vec![Some(false), None, None, Some(true)])
+            .data()
+            .clone();
+        let b = BooleanArray::from(vec![Some(false), None, None, Some(true)])
+            .data()
+            .clone();
         test_equal(a.as_ref(), b.as_ref(), true);
 
-        let b = BooleanArray::from(vec![None, None, None, Some(true)]).data();
+        let b = BooleanArray::from(vec![None, None, None, Some(true)])
+            .data()
+            .clone();
         test_equal(a.as_ref(), b.as_ref(), false);
 
-        let b = BooleanArray::from(vec![Some(true), None, None, Some(true)]).data();
+        let b = BooleanArray::from(vec![Some(true), None, None, Some(true)])
+            .data()
+            .clone();
         test_equal(a.as_ref(), b.as_ref(), false);
 
         // Test the case where offset != 0
 
-        let a =
-            BooleanArray::from(vec![false, true, false, true, false, false, true]).data();
-        let b =
-            BooleanArray::from(vec![false, false, false, true, false, true, true]).data();
+        let a = BooleanArray::from(vec![false, true, false, true, false, false, true])
+            .data()
+            .clone();
+        let b = BooleanArray::from(vec![false, false, false, true, false, true, true])
+            .data()
+            .clone();
         assert_eq!(equal(a.as_ref(), b.as_ref()), false);
         assert_eq!(equal(b.as_ref(), a.as_ref()), false);
 
@@ -393,8 +403,8 @@ mod tests {
         ];
 
         for (lhs, rhs, expected) in cases {
-            let lhs = Int32Array::from(lhs).data();
-            let rhs = Int32Array::from(rhs).data();
+            let lhs = Int32Array::from(lhs).data().clone();
+            let rhs = Int32Array::from(rhs).data().clone();
             test_equal(&lhs, &rhs, expected);
         }
     }
@@ -426,9 +436,9 @@ mod tests {
         ];
 
         for (lhs, slice_lhs, rhs, slice_rhs, expected) in cases {
-            let lhs = Int32Array::from(lhs).data();
+            let lhs = Int32Array::from(lhs).data().clone();
             let lhs = lhs.slice(slice_lhs.0, slice_lhs.1);
-            let rhs = Int32Array::from(rhs).data();
+            let rhs = Int32Array::from(rhs).data().clone();
             let rhs = rhs.slice(slice_rhs.0, slice_rhs.1);
 
             test_equal(&lhs, &rhs, expected);
@@ -483,8 +493,12 @@ mod tests {
         for (lhs, rhs, expected) in cases {
             let lhs = lhs.iter().map(|x| x.as_deref()).collect();
             let rhs = rhs.iter().map(|x| x.as_deref()).collect();
-            let lhs = GenericStringArray::<OffsetSize>::from_opt_vec(lhs).data();
-            let rhs = GenericStringArray::<OffsetSize>::from_opt_vec(rhs).data();
+            let lhs = GenericStringArray::<OffsetSize>::from_opt_vec(lhs)
+                .data()
+                .clone();
+            let rhs = GenericStringArray::<OffsetSize>::from_opt_vec(rhs)
+                .data()
+                .clone();
             test_equal(lhs.as_ref(), rhs.as_ref(), expected);
         }
     }
@@ -511,8 +525,12 @@ mod tests {
                 .iter()
                 .map(|x| x.as_deref().map(|x| x.as_bytes()))
                 .collect();
-            let lhs = GenericBinaryArray::<OffsetSize>::from_opt_vec(lhs).data();
-            let rhs = GenericBinaryArray::<OffsetSize>::from_opt_vec(rhs).data();
+            let lhs = GenericBinaryArray::<OffsetSize>::from_opt_vec(lhs)
+                .data()
+                .clone();
+            let rhs = GenericBinaryArray::<OffsetSize>::from_opt_vec(rhs)
+                .data()
+                .clone();
             test_equal(lhs.as_ref(), rhs.as_ref(), expected);
         }
     }
@@ -529,11 +547,11 @@ mod tests {
 
     #[test]
     fn test_null() {
-        let a = NullArray::new(2).data();
-        let b = NullArray::new(2).data();
+        let a = NullArray::new(2).data().clone();
+        let b = NullArray::new(2).data().clone();
         test_equal(a.as_ref(), b.as_ref(), true);
 
-        let b = NullArray::new(1).data();
+        let b = NullArray::new(1).data().clone();
         test_equal(a.as_ref(), b.as_ref(), false);
     }
 
@@ -549,7 +567,7 @@ mod tests {
                 builder.append(false).unwrap()
             }
         }
-        builder.finish().data()
+        builder.finish().data().clone()
     }
 
     #[test]
@@ -594,7 +612,7 @@ mod tests {
         ))))
         .len(6)
         .add_buffer(Buffer::from(vec![0i32, 2, 3, 4, 6, 7, 8].to_byte_slice()))
-        .add_child_data(c_values.data())
+        .add_child_data(c_values.data().clone())
         .null_bit_buffer(Buffer::from(vec![0b00001001]))
         .build();
 
@@ -615,7 +633,7 @@ mod tests {
         ))))
         .len(6)
         .add_buffer(Buffer::from(vec![0i32, 2, 3, 4, 6, 7, 8].to_byte_slice()))
-        .add_child_data(d_values.data())
+        .add_child_data(d_values.data().clone())
         .null_bit_buffer(Buffer::from(vec![0b00001001]))
         .build();
         test_equal(c.as_ref(), d.as_ref(), true);
@@ -654,7 +672,7 @@ mod tests {
                 builder.append_null().unwrap();
             }
         }
-        builder.finish().data()
+        builder.finish().data().clone()
     }
 
     #[test]
@@ -728,7 +746,7 @@ mod tests {
                 builder.append_null().unwrap();
             }
         }
-        builder.finish().data()
+        builder.finish().data().clone()
     }
 
     #[test]
@@ -825,7 +843,7 @@ mod tests {
                 builder.append(false).unwrap()
             }
         }
-        builder.finish().data()
+        builder.finish().data().clone()
     }
 
     #[test]
@@ -933,11 +951,13 @@ mod tests {
         let a =
             StructArray::try_from(vec![("f1", strings.clone()), ("f2", ints.clone())])
                 .unwrap()
-                .data();
+                .data()
+                .clone();
 
         let b = StructArray::try_from(vec![("f1", strings), ("f2", ints)])
             .unwrap()
-            .data();
+            .data()
+            .clone();
 
         test_equal(a.as_ref(), b.as_ref(), true);
     }
@@ -966,8 +986,8 @@ mod tests {
         ]))
         .null_bit_buffer(Buffer::from(vec![0b00001011]))
         .len(5)
-        .add_child_data(strings.data_ref().clone())
-        .add_child_data(ints.data_ref().clone())
+        .add_child_data(strings.data().clone())
+        .add_child_data(ints.data().clone())
         .build();
         let a = crate::array::make_array(a);
 
@@ -977,12 +997,12 @@ mod tests {
         ]))
         .null_bit_buffer(Buffer::from(vec![0b00001011]))
         .len(5)
-        .add_child_data(strings.data_ref().clone())
-        .add_child_data(ints_non_null.data_ref().clone())
+        .add_child_data(strings.data().clone())
+        .add_child_data(ints_non_null.data().clone())
         .build();
         let b = crate::array::make_array(b);
 
-        test_equal(a.data_ref(), b.data_ref(), true);
+        test_equal(a.data(), b.data(), true);
 
         // test with arrays that are not equal
         let c_ints_non_null: ArrayRef = Arc::new(Int32Array::from(vec![1, 2, 3, 0, 4]));
@@ -992,12 +1012,12 @@ mod tests {
         ]))
         .null_bit_buffer(Buffer::from(vec![0b00001011]))
         .len(5)
-        .add_child_data(strings.data_ref().clone())
-        .add_child_data(c_ints_non_null.data_ref().clone())
+        .add_child_data(strings.data().clone())
+        .add_child_data(c_ints_non_null.data().clone())
         .build();
         let c = crate::array::make_array(c);
 
-        test_equal(a.data_ref(), c.data_ref(), false);
+        test_equal(a.data(), c.data(), false);
 
         // test a nested struct
         let a = ArrayData::builder(DataType::Struct(vec![Field::new(
@@ -1007,7 +1027,7 @@ mod tests {
         )]))
         .null_bit_buffer(Buffer::from(vec![0b00011110]))
         .len(5)
-        .add_child_data(a.data_ref().clone())
+        .add_child_data(a.data().clone())
         .build();
         let a = crate::array::make_array(a);
 
@@ -1025,8 +1045,8 @@ mod tests {
         ]))
         .null_bit_buffer(Buffer::from(vec![0b00001011]))
         .len(5)
-        .add_child_data(strings.data_ref().clone())
-        .add_child_data(ints_non_null.data_ref().clone())
+        .add_child_data(strings.data().clone())
+        .add_child_data(ints_non_null.data().clone())
         .build();
 
         let b = ArrayData::builder(DataType::Struct(vec![Field::new(
@@ -1040,7 +1060,7 @@ mod tests {
         .build();
         let b = crate::array::make_array(b);
 
-        test_equal(a.data_ref(), b.data_ref(), true);
+        test_equal(a.data(), b.data(), true);
     }
 
     #[test]
@@ -1068,7 +1088,7 @@ mod tests {
         )]))
         .null_bit_buffer(Buffer::from(vec![0b00001010]))
         .len(5)
-        .add_child_data(strings1.data_ref().clone())
+        .add_child_data(strings1.data().clone())
         .build();
         let a = crate::array::make_array(a);
 
@@ -1079,11 +1099,11 @@ mod tests {
         )]))
         .null_bit_buffer(Buffer::from(vec![0b00001010]))
         .len(5)
-        .add_child_data(strings2.data_ref().clone())
+        .add_child_data(strings2.data().clone())
         .build();
         let b = crate::array::make_array(b);
 
-        test_equal(a.data_ref(), b.data_ref(), true);
+        test_equal(a.data(), b.data(), true);
 
         // test with arrays that are not equal
         let strings3: ArrayRef = Arc::new(StringArray::from(vec![
@@ -1100,11 +1120,11 @@ mod tests {
         )]))
         .null_bit_buffer(Buffer::from(vec![0b00001011]))
         .len(5)
-        .add_child_data(strings3.data_ref().clone())
+        .add_child_data(strings3.data().clone())
         .build();
         let c = crate::array::make_array(c);
 
-        test_equal(a.data_ref(), c.data_ref(), false);
+        test_equal(a.data(), c.data(), false);
     }
 
     fn create_dictionary_array(values: &[&str], keys: &[Option<&str>]) -> ArrayDataRef {
@@ -1121,7 +1141,7 @@ mod tests {
                 builder.append_null().unwrap()
             }
         }
-        builder.finish().data()
+        builder.finish().data().clone()
     }
 
     #[test]

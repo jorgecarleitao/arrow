@@ -105,15 +105,15 @@ impl<OffsetSize: StringOffsetSizeTrait> GenericStringArray<OffsetSize> {
              (i.e. List<PrimitiveArray<u8>>)."
         );
         assert_eq!(
-            v.data_ref().child_data()[0].data_type(),
+            v.data().child_data()[0].data_type(),
             &DataType::UInt8,
             "StringArray can only be created from List<u8> arrays, mismatched data types."
         );
 
         let mut builder = ArrayData::builder(OffsetSize::DATA_TYPE)
             .len(v.len())
-            .add_buffer(v.data_ref().buffers()[0].clone())
-            .add_buffer(v.data_ref().child_data()[0].buffers()[0].clone());
+            .add_buffer(v.data().buffers()[0].clone())
+            .add_buffer(v.data().child_data()[0].buffers()[0].clone());
         if let Some(bitmap) = v.data().null_bitmap() {
             builder = builder.null_bit_buffer(bitmap.bits.clone())
         }
@@ -221,11 +221,7 @@ impl<OffsetSize: StringOffsetSizeTrait> Array for GenericStringArray<OffsetSize>
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 
@@ -324,7 +320,7 @@ mod tests {
     #[should_panic(expected = "[Large]StringArray expects Datatype::[Large]Utf8")]
     fn test_string_array_from_int() {
         let array = LargeStringArray::from(vec!["a", "b"]);
-        StringArray::from(array.data());
+        StringArray::from(array.data().clone());
     }
 
     #[test]

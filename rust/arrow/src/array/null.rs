@@ -59,11 +59,7 @@ impl Array for NullArray {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 
@@ -82,7 +78,7 @@ impl Array for NullArray {
     /// Returns the total number of null values in this array.
     /// The null count of a `NullArray` always equals its length.
     fn null_count(&self) -> usize {
-        self.data_ref().len()
+        self.len()
     }
 
     /// Returns the total number of bytes of memory occupied by the buffers owned by this [NullArray].

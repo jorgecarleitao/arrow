@@ -290,7 +290,7 @@ where
 
             *elem = values.value(index);
         }
-        nulls = indices.data_ref().null_buffer().cloned();
+        nulls = indices.data().null_buffer().cloned();
     } else {
         let num_bytes = bit_util::ceil(data_len, 8);
         let mut null_buf = MutableBuffer::new(num_bytes).with_bitset(num_bytes, true);
@@ -308,7 +308,7 @@ where
 
             *elem = values.value(index);
         }
-        nulls = match indices.data_ref().null_buffer() {
+        nulls = match indices.data().null_buffer() {
             Some(buffer) => Some(buffer_bin_and(
                 buffer,
                 0,
@@ -364,7 +364,7 @@ where
             Ok(())
         })?;
 
-        nulls = indices.data_ref().null_buffer().cloned();
+        nulls = indices.data().null_buffer().cloned();
     } else {
         let mut null_buf = MutableBuffer::new(num_byte).with_bitset(num_byte, true);
         let null_slice = null_buf.as_slice_mut();
@@ -383,7 +383,7 @@ where
             Ok(())
         })?;
 
-        nulls = match indices.data_ref().null_buffer() {
+        nulls = match indices.data().null_buffer() {
             Some(buffer) => Some(buffer_bin_and(
                 buffer,
                 0,
@@ -479,7 +479,7 @@ where
             }
             *offset = length_so_far;
         }
-        nulls = indices.data_ref().null_buffer().cloned();
+        nulls = indices.data().null_buffer().cloned();
     } else {
         let num_bytes = bit_util::ceil(data_len, 8);
 
@@ -503,7 +503,7 @@ where
             *offset = length_so_far;
         }
 
-        nulls = match indices.data_ref().null_buffer() {
+        nulls = match indices.data().null_buffer() {
             Some(buffer) => {
                 Some(buffer_bin_and(buffer, 0, &null_buf.into(), 0, data_len))
             }
@@ -543,6 +543,7 @@ where
         take_value_indices_from_list::<IndexType, OffsetType>(values, indices)?;
 
     let taken = take_impl::<OffsetType>(values.values().as_ref(), &list_indices, None)?;
+    let taken = taken.data().clone();
     // determine null count and null buffer, which are a function of `values` and `indices`
     let mut null_count = 0;
     let num_bytes = bit_util::ceil(indices.len(), 8);
@@ -565,7 +566,7 @@ where
         .len(indices.len())
         .null_bit_buffer(null_buf.into())
         .offset(0)
-        .add_child_data(taken.data())
+        .add_child_data(taken)
         .add_buffer(value_offsets)
         .build();
     Ok(GenericListArray::<OffsetType::Native>::from(list_data))
@@ -587,6 +588,7 @@ where
 {
     let list_indices = take_value_indices_from_fixed_size_list(values, indices, length)?;
     let taken = take_impl::<UInt32Type>(values.values().as_ref(), &list_indices, None)?;
+    let taken = taken.data().clone();
 
     // determine null count and null buffer, which are a function of `values` and `indices`
     let num_bytes = bit_util::ceil(indices.len(), 8);
@@ -606,7 +608,7 @@ where
         .len(indices.len())
         .null_bit_buffer(null_buf.into())
         .offset(0)
-        .add_child_data(taken.data())
+        .add_child_data(taken)
         .build();
 
     Ok(FixedSizeListArray::from(list_data))
@@ -627,7 +629,7 @@ where
     I::Native: ToPrimitive,
 {
     let new_keys = take_primitive::<T, I>(&values.keys_array(), indices)?;
-    let new_keys_data = new_keys.data_ref();
+    let new_keys_data = new_keys.data();
 
     let data = Arc::new(ArrayData::new(
         values.data_type().clone(),
@@ -694,8 +696,10 @@ mod tests {
 
     // create a simple struct for testing purposes
     fn create_test_struct() -> StructArray {
-        let boolean_data = BooleanArray::from(vec![true, false, false, true]).data();
-        let int_data = Int32Array::from(vec![42, 28, 19, 31]).data();
+        let boolean_data = BooleanArray::from(vec![true, false, false, true])
+            .data()
+            .clone();
+        let int_data = Int32Array::from(vec![42, 28, 19, 31]).data().clone();
         let mut field_types = vec![];
         field_types.push(Field::new("a", DataType::Boolean, true));
         field_types.push(Field::new("b", DataType::Int32, true));
@@ -963,7 +967,9 @@ mod tests {
     macro_rules! test_take_list {
         ($offset_type:ty, $list_data_type:ident, $list_array_type:ident) => {{
             // Construct a value array, [[0,0,0], [-1,-2,-1], [2,3]]
-            let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 3]).data();
+            let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 3])
+                .data()
+                .clone();
             // Construct offsets
             let value_offsets: [$offset_type; 4] = [0, 3, 6, 8];
             let value_offsets = Buffer::from(&value_offsets.to_byte_slice());
@@ -1001,7 +1007,8 @@ mod tests {
                 Some(0),
                 Some(0),
             ])
-            .data();
+            .data()
+            .clone();
             // construct offsets
             let expected_offsets: [$offset_type; 6] = [0, 2, 2, 5, 7, 10];
             let expected_offsets = Buffer::from(&expected_offsets.to_byte_slice());
@@ -1035,7 +1042,8 @@ mod tests {
                 Some(5),
                 None,
             ])
-            .data();
+            .data()
+            .clone();
             // Construct offsets
             let value_offsets: [$offset_type; 5] = [0, 3, 6, 7, 9];
             let value_offsets = Buffer::from(&value_offsets.to_byte_slice());
@@ -1073,7 +1081,8 @@ mod tests {
                 None,
                 Some(0),
             ])
-            .data();
+            .data()
+            .clone();
             // construct offsets
             let expected_offsets: [$offset_type; 6] = [0, 1, 1, 4, 6, 9];
             let expected_offsets = Buffer::from(&expected_offsets.to_byte_slice());
@@ -1106,7 +1115,8 @@ mod tests {
                 Some(5),
                 None,
             ])
-            .data();
+            .data()
+            .clone();
             // Construct offsets
             let value_offsets: [$offset_type; 5] = [0, 3, 6, 6, 8];
             let value_offsets = Buffer::from(&value_offsets.to_byte_slice());
@@ -1143,7 +1153,8 @@ mod tests {
                 None,
                 Some(0),
             ])
-            .data();
+            .data()
+            .clone();
             // construct offsets
             let expected_offsets: [$offset_type; 6] = [0, 0, 0, 3, 5, 8];
             let expected_offsets = Buffer::from(&expected_offsets.to_byte_slice());
@@ -1275,7 +1286,9 @@ mod tests {
     #[should_panic(expected = "index out of bounds: the len is 4 but the index is 1000")]
     fn test_take_list_out_of_bounds() {
         // Construct a value array, [[0,0,0], [-1,-2,-1], [2,3]]
-        let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 3]).data();
+        let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 3])
+            .data()
+            .clone();
         // Construct offsets
         let value_offsets = Buffer::from(&[0, 3, 6, 8].to_byte_slice());
         // Construct a list array from the above two
@@ -1305,9 +1318,10 @@ mod tests {
         assert_eq!(index.len(), a.len());
         assert_eq!(0, a.null_count());
 
-        let expected_bool_data =
-            BooleanArray::from(vec![true, true, false, true, false]).data();
-        let expected_int_data = Int32Array::from(vec![42, 31, 28, 42, 19]).data();
+        let expected_bool_data = BooleanArray::from(vec![true, true, false, true, false])
+            .data()
+            .clone();
+        let expected_int_data = Int32Array::from(vec![42, 31, 28, 42, 19]).data().clone();
         let mut field_types = vec![];
         field_types.push(Field::new("a", DataType::Boolean, true));
         field_types.push(Field::new("b", DataType::Int32, true));
@@ -1333,9 +1347,12 @@ mod tests {
 
         let expected_bool_data =
             BooleanArray::from(vec![None, Some(true), Some(false), None, Some(true)])
-                .data();
+                .data()
+                .clone();
         let expected_int_data =
-            Int32Array::from(vec![None, Some(31), Some(28), None, Some(42)]).data();
+            Int32Array::from(vec![None, Some(31), Some(28), None, Some(42)])
+                .data()
+                .clone();
 
         let mut field_types = vec![];
         field_types.push(Field::new("a", DataType::Boolean, true));
@@ -1403,7 +1420,7 @@ mod tests {
             .downcast_ref::<DictionaryArray<Int16Type>>()
             .unwrap();
 
-        let result_values: StringArray = result.values().data().into();
+        let result_values: StringArray = result.values().data().clone().into();
 
         // dictionary values should stay the same
         let expected_values = StringArray::from(vec!["foo", "bar", ""]);

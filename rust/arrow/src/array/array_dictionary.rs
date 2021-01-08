@@ -77,7 +77,7 @@ impl<'a, K: ArrowPrimitiveType> DictionaryArray<K> {
 
     /// Returns an array view of the keys of this dictionary
     pub fn keys_array(&self) -> PrimitiveArray<K> {
-        let data = self.data_ref();
+        let data = self.data();
         let keys_data = ArrayData::new(
             K::DATA_TYPE,
             data.len(),
@@ -108,7 +108,7 @@ impl<'a, K: ArrowPrimitiveType> DictionaryArray<K> {
 
     /// Returns a clone of the value type of this list.
     pub fn value_type(&self) -> DataType {
-        self.values.data_ref().data_type().clone()
+        self.values.data().data_type().clone()
     }
 
     /// The length of the dictionary is the length of the keys array.
@@ -221,11 +221,7 @@ impl<T: ArrowPrimitiveType> Array for DictionaryArray<T> {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 
@@ -292,7 +288,7 @@ mod tests {
         let dict_array = Int16DictionaryArray::from(dict_data);
 
         let values = dict_array.values();
-        assert_eq!(value_data, values.data());
+        assert_eq!(&value_data, values.data());
         assert_eq!(DataType::Int8, dict_array.value_type());
         assert_eq!(3, dict_array.len());
 
@@ -311,7 +307,7 @@ mod tests {
         let dict_array = Int16DictionaryArray::from(dict_data);
 
         let values = dict_array.values();
-        assert_eq!(value_data, values.data());
+        assert_eq!(&value_data, values.data());
         assert_eq!(DataType::Int8, dict_array.value_type());
         assert_eq!(2, dict_array.len());
         assert_eq!(dict_array.keys(), &Int16Array::from(vec![3_i16, 4]));

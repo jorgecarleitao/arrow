@@ -45,7 +45,7 @@ macro_rules! compare_op {
         }
 
         let null_bit_buffer =
-            combine_option_bitmap($left.data_ref(), $right.data_ref(), $left.len())?;
+            combine_option_bitmap($left.data(), $right.data(), $left.len())?;
 
         let byte_capacity = bit_util::ceil($left.len(), 8);
         let actual_capacity = bit_util::round_upto_multiple_of_64(byte_capacity);
@@ -142,8 +142,7 @@ pub fn like_utf8(left: &StringArray, right: &StringArray) -> Result<BooleanArray
         ));
     }
 
-    let null_bit_buffer =
-        combine_option_bitmap(left.data_ref(), right.data_ref(), left.len())?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), left.len())?;
 
     let mut result = BooleanBufferBuilder::new(left.len());
     for i in 0..left.len() {
@@ -238,8 +237,7 @@ pub fn nlike_utf8(left: &StringArray, right: &StringArray) -> Result<BooleanArra
         ));
     }
 
-    let null_bit_buffer =
-        combine_option_bitmap(left.data_ref(), right.data_ref(), left.len())?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), left.len())?;
 
     let mut result = BooleanBufferBuilder::new(left.len());
     for i in 0..left.len() {
@@ -392,7 +390,7 @@ where
         ));
     }
 
-    let null_bit_buffer = combine_option_bitmap(left.data_ref(), right.data_ref(), len)?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), len)?;
 
     let lanes = T::lanes();
     let buffer_size = bit_util::ceil(len, 8);
@@ -522,7 +520,7 @@ where
     result_remainder.copy_from_slice(remainder_mask_as_bytes);
 
     let null_bit_buffer = left
-        .data_ref()
+        .data()
         .null_buffer()
         .map(|b| b.bit_slice(left.offset(), left.len()));
 
@@ -707,7 +705,7 @@ where
     let num_bytes = bit_util::ceil(left_len, 8);
 
     let not_both_null_bit_buffer =
-        match combine_option_bitmap(left.data_ref(), right.data_ref(), left_len)? {
+        match combine_option_bitmap(left.data(), right.data(), left_len)? {
             Some(buff) => buff,
             None => new_all_set_buffer(num_bytes),
         };
@@ -762,7 +760,7 @@ where
     let num_bytes = bit_util::ceil(left_len, 8);
 
     let not_both_null_bit_buffer =
-        match combine_option_bitmap(left.data_ref(), right.data_ref(), left_len)? {
+        match combine_option_bitmap(left.data(), right.data(), left_len)? {
             Some(buff) => buff,
             None => new_all_set_buffer(num_bytes),
         };
@@ -1116,7 +1114,8 @@ mod tests {
             None,
             Some(7),
         ])
-        .data();
+        .data()
+        .clone();
         let value_offsets = Buffer::from(&[0i64, 3, 6, 6, 9].to_byte_slice());
         let list_data_type =
             DataType::LargeList(Box::new(Field::new("item", DataType::Int32, true)));

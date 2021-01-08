@@ -81,11 +81,7 @@ impl Array for BooleanArray {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 

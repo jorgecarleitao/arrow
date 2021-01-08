@@ -633,7 +633,7 @@ pub fn lexsort_to_indices(columns: &[SortColumn]) -> Result<UInt32Array> {
                 // flatten and convert build comparators
                 // use ArrayData for is_valid checks later to avoid dynamic call
                 let values = column.values.as_ref();
-                let data = values.data_ref();
+                let data = values.data();
                 Ok((
                     data,
                     build_compare(values, values)?,

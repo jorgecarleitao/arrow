@@ -61,7 +61,7 @@ where
         T::DATA_TYPE,
         array.len(),
         None,
-        array.data_ref().null_buffer().cloned(),
+        array.data().null_buffer().cloned(),
         0,
         vec![Buffer::from(values.to_byte_slice())],
         vec![],
@@ -110,7 +110,7 @@ where
         T::DATA_TYPE,
         array.len(),
         None,
-        array.data_ref().null_buffer().cloned(),
+        array.data().null_buffer().cloned(),
         0,
         vec![result.into()],
         vec![],
@@ -140,8 +140,7 @@ where
         ));
     }
 
-    let null_bit_buffer =
-        combine_option_bitmap(left.data_ref(), right.data_ref(), left.len())?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), left.len())?;
 
     let values = left
         .values()
@@ -183,8 +182,7 @@ where
         ));
     }
 
-    let null_bit_buffer =
-        combine_option_bitmap(left.data_ref(), right.data_ref(), left.len())?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), left.len())?;
 
     let mut values = Vec::with_capacity(left.len());
     if let Some(b) = &null_bit_buffer {
@@ -245,8 +243,7 @@ where
         ));
     }
 
-    let null_bit_buffer =
-        combine_option_bitmap(left.data_ref(), right.data_ref(), left.len())?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), left.len())?;
 
     let lanes = T::lanes();
     let buffer_size = left.len() * std::mem::size_of::<T::Native>();
@@ -376,8 +373,7 @@ where
     }
 
     // Create the combined `Bitmap`
-    let null_bit_buffer =
-        combine_option_bitmap(left.data_ref(), right.data_ref(), left.len())?;
+    let null_bit_buffer = combine_option_bitmap(left.data(), right.data(), left.len())?;
 
     let lanes = T::lanes();
     let buffer_size = left.len() * std::mem::size_of::<T::Native>();

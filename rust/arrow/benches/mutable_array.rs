@@ -58,7 +58,7 @@ fn create_slices(size: usize) -> Vec<(usize, usize)> {
 }
 
 fn bench(v1: &ArrayRef, slices: &[(usize, usize)]) {
-    let mut mutable = MutableArrayData::new(vec![v1.data_ref()], false, 5);
+    let mut mutable = MutableArrayData::new(vec![v1.data()], false, 5);
     for (start, end) in slices {
         mutable.extend(0, *start, *end)
     }

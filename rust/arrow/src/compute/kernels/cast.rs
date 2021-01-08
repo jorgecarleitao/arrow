@@ -245,7 +245,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
             "Cannot cast to struct from other types".to_string(),
         )),
         (List(_), List(ref to)) => {
-            let data = array.data_ref();
+            let data = array.data().clone();
             let underlying_array = make_array(data.child_data()[0].clone());
             let cast_array = cast(&underlying_array, to.data_type())?;
             let array_data = ArrayData::new(
@@ -260,7 +260,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
                 array.offset(),
                 // reuse offset buffer
                 data.buffers().to_vec(),
-                vec![cast_array.data()],
+                vec![cast_array.data().clone()],
             );
             let list = ListArray::from(Arc::new(array_data));
             Ok(Arc::new(list) as ArrayRef)
@@ -285,7 +285,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
                     .map(|bitmap| bitmap.bits),
                 0,
                 vec![value_offsets],
-                vec![cast_array.data()],
+                vec![cast_array.data().clone()],
             );
             let list_array = Arc::new(ListArray::from(Arc::new(list_data))) as ArrayRef;
 
@@ -594,7 +594,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
             Ok(Arc::new(b.finish()) as ArrayRef)
         }
         (Time32(TimeUnit::Second), Time32(TimeUnit::Millisecond)) => {
-            let time_array = Time32MillisecondArray::from(array.data());
+            let time_array = Time32MillisecondArray::from(array.data().clone());
             let mult =
                 Time32MillisecondArray::from(vec![MILLISECONDS as i32; array.len()]);
             let time32_ms = multiply(&time_array, &mult)?;
@@ -602,14 +602,14 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
             Ok(Arc::new(time32_ms) as ArrayRef)
         }
         (Time32(TimeUnit::Millisecond), Time32(TimeUnit::Second)) => {
-            let time_array = Time32SecondArray::from(array.data());
+            let time_array = Time32SecondArray::from(array.data().clone());
             let divisor = Time32SecondArray::from(vec![MILLISECONDS as i32; array.len()]);
             let time32_s = divide(&time_array, &divisor)?;
 
             Ok(Arc::new(time32_s) as ArrayRef)
         }
         (Time32(from_unit), Time64(to_unit)) => {
-            let time_array = Int32Array::from(array.data());
+            let time_array = Int32Array::from(array.data().clone());
             // note: (numeric_cast + SIMD multiply) is faster than (cast & multiply)
             let c: Int64Array = numeric_cast(&time_array);
             let from_size = time_unit_multiple(&from_unit);
@@ -632,21 +632,21 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
             }
         }
         (Time64(TimeUnit::Microsecond), Time64(TimeUnit::Nanosecond)) => {
-            let time_array = Time64NanosecondArray::from(array.data());
+            let time_array = Time64NanosecondArray::from(array.data().clone());
             let mult = Time64NanosecondArray::from(vec![MILLISECONDS; array.len()]);
             let time64_ns = multiply(&time_array, &mult)?;
 
             Ok(Arc::new(time64_ns) as ArrayRef)
         }
         (Time64(TimeUnit::Nanosecond), Time64(TimeUnit::Microsecond)) => {
-            let time_array = Time64MicrosecondArray::from(array.data());
+            let time_array = Time64MicrosecondArray::from(array.data().clone());
             let divisor = Time64MicrosecondArray::from(vec![MILLISECONDS; array.len()]);
             let time64_us = divide(&time_array, &divisor)?;
 
             Ok(Arc::new(time64_us) as ArrayRef)
         }
         (Time64(from_unit), Time32(to_unit)) => {
-            let time_array = Int64Array::from(array.data());
+            let time_array = Int64Array::from(array.data().clone());
             let from_size = time_unit_multiple(&from_unit);
             let to_size = time_unit_multiple(&to_unit);
             let divisor = from_size / to_size;
@@ -700,7 +700,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
             }
         }
         (Timestamp(from_unit, _), Timestamp(to_unit, _)) => {
-            let time_array = Int64Array::from(array.data());
+            let time_array = Int64Array::from(array.data().clone());
             let from_size = time_unit_multiple(&from_unit);
             let to_size = time_unit_multiple(&to_unit);
             // we either divide or multiply, depending on size of each unit
@@ -737,7 +737,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
             }
         }
         (Timestamp(from_unit, _), Date32(_)) => {
-            let time_array = Int64Array::from(array.data());
+            let time_array = Int64Array::from(array.data().clone());
             let from_size = time_unit_multiple(&from_unit) * SECONDS_IN_DAY;
             let mut b = Date32Builder::new(array.len());
             for i in 0..array.len() {
@@ -760,7 +760,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
 
             match to_size.cmp(&from_size) {
                 std::cmp::Ordering::Less => {
-                    let time_array = Date64Array::from(array.data());
+                    let time_array = Date64Array::from(array.data().clone());
                     Ok(Arc::new(divide(
                         &time_array,
                         &Date64Array::from(vec![from_size / to_size; array.len()]),
@@ -770,7 +770,7 @@ pub fn cast(array: &ArrayRef, to_type: &DataType) -> Result<ArrayRef> {
                     cast_array_data::<Date64Type>(array, to_type.clone())
                 }
                 std::cmp::Ordering::Greater => {
-                    let time_array = Date64Array::from(array.data());
+                    let time_array = Date64Array::from(array.data().clone());
                     Ok(Arc::new(multiply(
                         &time_array,
                         &Date64Array::from(vec![to_size / from_size; array.len()]),
@@ -1043,7 +1043,7 @@ fn dictionary_cast<K: ArrowDictionaryKeyType>(
                     .map(|bitmap| bitmap.bits),
                 cast_keys.data().offset(),
                 cast_keys.data().buffers().to_vec(),
-                vec![cast_values.data()],
+                vec![cast_values.data().clone()],
             ));
 
             // create the appropriate array type
@@ -1389,7 +1389,9 @@ mod tests {
     #[test]
     fn test_cast_list_i32_to_list_u16() {
         // Construct a value array
-        let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 100000000]).data();
+        let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 100000000])
+            .data()
+            .clone();
 
         let value_offsets = Buffer::from(&[0, 3, 6, 8].to_byte_slice());
 
@@ -1447,8 +1449,9 @@ mod tests {
     )]
     fn test_cast_list_i32_to_list_timestamp() {
         // Construct a value array
-        let value_data =
-            Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 8, 100000000]).data();
+        let value_data = Int32Array::from(vec![0, 0, 0, -1, -2, -1, 2, 8, 100000000])
+            .data()
+            .clone();
 
         let value_offsets = Buffer::from(&[0, 3, 6, 9].to_byte_slice());
 

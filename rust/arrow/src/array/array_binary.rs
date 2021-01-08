@@ -123,22 +123,22 @@ impl<OffsetSize: BinaryOffsetSizeTrait> GenericBinaryArray<OffsetSize> {
 
     fn from_list(v: GenericListArray<OffsetSize>) -> Self {
         assert_eq!(
-            v.data_ref().child_data()[0].child_data().len(),
+            v.data().child_data()[0].child_data().len(),
             0,
             "BinaryArray can only be created from list array of u8 values \
              (i.e. List<PrimitiveArray<u8>>)."
         );
         assert_eq!(
-            v.data_ref().child_data()[0].data_type(),
+            v.data().child_data()[0].data_type(),
             &DataType::UInt8,
             "BinaryArray can only be created from List<u8> arrays, mismatched data types."
         );
 
         let mut builder = ArrayData::builder(OffsetSize::DATA_TYPE)
             .len(v.len())
-            .add_buffer(v.data_ref().buffers()[0].clone())
-            .add_buffer(v.data_ref().child_data()[0].buffers()[0].clone());
-        if let Some(bitmap) = v.data_ref().null_bitmap() {
+            .add_buffer(v.data().buffers()[0].clone())
+            .add_buffer(v.data().child_data()[0].buffers()[0].clone());
+        if let Some(bitmap) = v.data().null_bitmap() {
             builder = builder.null_bit_buffer(bitmap.bits.clone())
         }
 
@@ -169,11 +169,7 @@ impl<OffsetSize: BinaryOffsetSizeTrait> Array for GenericBinaryArray<OffsetSize>
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 
@@ -418,21 +414,21 @@ impl From<ArrayDataRef> for FixedSizeBinaryArray {
 impl From<FixedSizeListArray> for FixedSizeBinaryArray {
     fn from(v: FixedSizeListArray) -> Self {
         assert_eq!(
-            v.data_ref().child_data()[0].child_data().len(),
+            v.data().child_data()[0].child_data().len(),
             0,
             "FixedSizeBinaryArray can only be created from list array of u8 values \
              (i.e. FixedSizeList<PrimitiveArray<u8>>)."
         );
         assert_eq!(
-            v.data_ref().child_data()[0].data_type(),
+            v.data().child_data()[0].data_type(),
             &DataType::UInt8,
             "FixedSizeBinaryArray can only be created from FixedSizeList<u8> arrays, mismatched data types."
         );
 
         let mut builder = ArrayData::builder(DataType::FixedSizeBinary(v.value_length()))
             .len(v.len())
-            .add_buffer(v.data_ref().child_data()[0].buffers()[0].clone());
-        if let Some(bitmap) = v.data_ref().null_bitmap() {
+            .add_buffer(v.data().child_data()[0].buffers()[0].clone());
+        if let Some(bitmap) = v.data().null_bitmap() {
             builder = builder.null_bit_buffer(bitmap.bits.clone())
         }
 
@@ -456,11 +452,7 @@ impl Array for FixedSizeBinaryArray {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 
@@ -535,21 +527,21 @@ impl DecimalArray {
         scale: usize,
     ) -> Self {
         assert_eq!(
-            v.data_ref().child_data()[0].child_data().len(),
+            v.data().child_data()[0].child_data().len(),
             0,
             "DecimalArray can only be created from list array of u8 values \
              (i.e. FixedSizeList<PrimitiveArray<u8>>)."
         );
         assert_eq!(
-            v.data_ref().child_data()[0].data_type(),
+            v.data().child_data()[0].data_type(),
             &DataType::UInt8,
             "DecimalArray can only be created from FixedSizeList<u8> arrays, mismatched data types."
         );
 
         let mut builder = ArrayData::builder(DataType::Decimal(precision, scale))
             .len(v.len())
-            .add_buffer(v.data_ref().child_data()[0].buffers()[0].clone());
-        if let Some(bitmap) = v.data_ref().null_bitmap() {
+            .add_buffer(v.data().child_data()[0].buffers()[0].clone());
+        if let Some(bitmap) = v.data().null_bitmap() {
             builder = builder.null_bit_buffer(bitmap.bits.clone())
         }
 
@@ -603,11 +595,7 @@ impl Array for DecimalArray {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 

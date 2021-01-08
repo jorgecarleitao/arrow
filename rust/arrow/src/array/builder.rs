@@ -654,6 +654,7 @@ impl<T: ArrowPrimitiveType> PrimitiveBuilder<T> {
 
     /// Builds the `DictionaryArray` and reset this builder.
     pub fn finish_dict(&mut self, values: ArrayRef) -> DictionaryArray<T> {
+        let values = values.data().clone();
         let len = self.len();
         let null_bit_buffer = self.bitmap_builder.finish();
         let null_count = len - null_bit_buffer.count_set_bits();
@@ -667,7 +668,7 @@ impl<T: ArrowPrimitiveType> PrimitiveBuilder<T> {
         if null_count > 0 {
             builder = builder.null_bit_buffer(null_bit_buffer);
         }
-        builder = builder.add_child_data(values.data());
+        builder = builder.add_child_data(values);
         DictionaryArray::<T>::from(builder.build())
     }
 }
@@ -770,7 +771,7 @@ where
             .downcast_mut::<T>()
             .unwrap()
             .finish();
-        let values_data = values_arr.data();
+        let values_data = values_arr.data().clone();
 
         let offset_buffer = self.offsets_builder.finish();
         let null_bit_buffer = self.bitmap_builder.finish();
@@ -899,7 +900,7 @@ where
             .downcast_mut::<T>()
             .unwrap()
             .finish();
-        let values_data = values_arr.data();
+        let values_data = values_arr.data().clone();
 
         // check that values_data length is multiple of len if we have data
         if len != 0 {
@@ -1483,7 +1484,7 @@ impl StructBuilder {
         let mut child_data = Vec::with_capacity(self.field_builders.len());
         for f in &mut self.field_builders {
             let arr = f.finish();
-            child_data.push(arr.data());
+            child_data.push(arr.data().clone());
         }
 
         let null_bit_buffer = self.bitmap_builder.finish();
@@ -2868,7 +2869,7 @@ mod tests {
             .add_buffer(Buffer::from(&[1, 2, 0, 4].to_byte_slice()))
             .build();
 
-        assert_eq!(expected_string_data, arr.column(0).data());
+        assert_eq!(&expected_string_data, arr.column(0).data());
 
         // TODO: implement equality for ArrayData
         assert_eq!(expected_int_data.len(), arr.column(1).data().len());

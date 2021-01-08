@@ -30,7 +30,7 @@ where
     OffsetSize: OffsetSizeTrait,
 {
     // note: offsets are stored as u8, but they can be interpreted as OffsetSize
-    let offsets = array.data_ref().clone().buffers()[0].clone();
+    let offsets = array.data().clone().buffers()[0].clone();
     // this is a 30% improvement over iterating over u8s and building OffsetSize, which
     // justifies the usage of `unsafe`.
     let slice: &[OffsetSize] =
@@ -41,11 +41,7 @@ where
         .map(|offset| offset[1] - offset[0])
         .collect();
 
-    let null_bit_buffer = array
-        .data_ref()
-        .null_bitmap()
-        .as_ref()
-        .map(|b| b.bits.clone());
+    let null_bit_buffer = array.data().null_bitmap().as_ref().map(|b| b.bits.clone());
 
     let data = ArrayData::new(
         data_type,
@@ -190,7 +186,7 @@ mod tests {
             ArrayData::builder(DataType::Utf8)
                 .len(2)
                 .offset(1)
-                .buffers(a.data_ref().buffers().to_vec())
+                .buffers(a.data().buffers().to_vec())
                 .build(),
         );
         let result = length(b.as_ref())?;

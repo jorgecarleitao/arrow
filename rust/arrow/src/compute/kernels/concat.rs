@@ -56,10 +56,7 @@ pub fn concat(arrays: &[&Array]) -> Result<ArrayRef> {
     let lengths = arrays.iter().map(|array| array.len()).collect::<Vec<_>>();
     let capacity = lengths.iter().sum();
 
-    let arrays = arrays
-        .iter()
-        .map(|a| a.data_ref().as_ref())
-        .collect::<Vec<_>>();
+    let arrays = arrays.iter().map(|a| a.data().as_ref()).collect::<Vec<_>>();
 
     let mut mutable = MutableArrayData::new(arrays, false, capacity);
 

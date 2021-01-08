@@ -127,7 +127,7 @@ impl UnionArray {
         let len = type_ids.len();
         let mut builder = ArrayData::builder(DataType::Union(field_types))
             .add_buffer(type_ids)
-            .child_data(field_values.into_iter().map(|a| a.data()).collect())
+            .child_data(field_values.into_iter().map(|a| a.data().clone()).collect())
             .len(len);
         if let Some(bitmap) = bitmap_data {
             builder = builder.null_bit_buffer(bitmap)
@@ -275,11 +275,7 @@ impl Array for UnionArray {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
     }
 

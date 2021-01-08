@@ -51,8 +51,8 @@ where
 
     let len = left.len();
 
-    let left_data = left.data_ref();
-    let right_data = right.data_ref();
+    let left_data = left.data();
+    let right_data = right.data();
     let null_bit_buffer = combine_option_bitmap(&left_data, &right_data, len)?;
 
     let left_buffer = &left_data.buffers()[0];
@@ -136,7 +136,7 @@ pub fn not(left: &BooleanArray) -> Result<BooleanArray> {
     let left_offset = left.offset();
     let len = left.len();
 
-    let data = left.data_ref();
+    let data = left.data();
     let null_bit_buffer = data
         .null_bitmap()
         .as_ref()
@@ -174,7 +174,7 @@ pub fn not(left: &BooleanArray) -> Result<BooleanArray> {
 pub fn is_null(input: &Array) -> Result<BooleanArray> {
     let len = input.len();
 
-    let output = match input.data_ref().null_buffer() {
+    let output = match input.data().null_buffer() {
         None => {
             let len_bytes = ceil(len, 8);
             MutableBuffer::new(len_bytes)
@@ -208,7 +208,7 @@ pub fn is_null(input: &Array) -> Result<BooleanArray> {
 pub fn is_not_null(input: &Array) -> Result<BooleanArray> {
     let len = input.len();
 
-    let output = match input.data_ref().null_buffer() {
+    let output = match input.data().null_buffer() {
         None => {
             let len_bytes = ceil(len, 8);
             MutableBuffer::new(len_bytes)
@@ -551,7 +551,7 @@ mod tests {
         let expected = BooleanArray::from(vec![false, false, false, false]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -564,7 +564,7 @@ mod tests {
         let expected = BooleanArray::from(vec![false, false, false, false]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -576,7 +576,7 @@ mod tests {
         let expected = BooleanArray::from(vec![true, true, true, true]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -589,7 +589,7 @@ mod tests {
         let expected = BooleanArray::from(vec![true, true, true, true]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -601,7 +601,7 @@ mod tests {
         let expected = BooleanArray::from(vec![false, true, false, true]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -632,7 +632,7 @@ mod tests {
         let expected = BooleanArray::from(vec![false, true, false, true]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -644,7 +644,7 @@ mod tests {
         let expected = BooleanArray::from(vec![true, false, true, false]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]
@@ -675,7 +675,7 @@ mod tests {
         let expected = BooleanArray::from(vec![true, false, true, false]);
 
         assert_eq!(expected, res);
-        assert_eq!(&None, res.data_ref().null_bitmap());
+        assert_eq!(&None, res.data().null_bitmap());
     }
 
     #[test]

@@ -56,11 +56,8 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// ```
     fn as_any(&self) -> &Any;
 
-    /// Returns a reference-counted pointer to the underlying data of this array.
-    fn data(&self) -> ArrayDataRef;
-
-    /// Returns a borrowed & reference-counted pointer to the underlying data of this array.
-    fn data_ref(&self) -> &ArrayDataRef;
+    /// Returns a reference to the underlying data of this array.
+    fn data(&self) -> &ArrayDataRef;
 
     /// Returns a reference to the [`DataType`](crate::datatypes::DataType) of this array.
     ///
@@ -75,7 +72,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(*array.data_type(), DataType::Int32);
     /// ```
     fn data_type(&self) -> &DataType {
-        self.data_ref().data_type()
+        self.data().data_type()
     }
 
     /// Returns a zero-copy slice of this array with the indicated offset and length.
@@ -92,7 +89,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array_slice.as_ref(), &Int32Array::from(vec![2, 3, 4]));
     /// ```
     fn slice(&self, offset: usize, length: usize) -> ArrayRef {
-        make_array(Arc::new(self.data_ref().as_ref().slice(offset, length)))
+        make_array(Arc::new(self.data().slice(offset, length)))
     }
 
     /// Returns the length (i.e., number of elements) of this array.
@@ -107,7 +104,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array.len(), 5);
     /// ```
     fn len(&self) -> usize {
-        self.data_ref().len()
+        self.data().len()
     }
 
     /// Returns whether this array is empty.
@@ -122,7 +119,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array.is_empty(), false);
     /// ```
     fn is_empty(&self) -> bool {
-        self.data_ref().is_empty()
+        self.data().is_empty()
     }
 
     /// Returns the offset into the underlying data used by this array(-slice).
@@ -142,7 +139,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array_slice.offset(), 1);
     /// ```
     fn offset(&self) -> usize {
-        self.data_ref().offset()
+        self.data().offset()
     }
 
     /// Returns whether the element at `index` is null.
@@ -159,7 +156,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array.is_null(1), true);
     /// ```
     fn is_null(&self, index: usize) -> bool {
-        self.data_ref().is_null(index)
+        self.data().is_null(index)
     }
 
     /// Returns whether the element at `index` is not null.
@@ -176,7 +173,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array.is_valid(1), false);
     /// ```
     fn is_valid(&self, index: usize) -> bool {
-        self.data_ref().is_valid(index)
+        self.data().is_valid(index)
     }
 
     /// Returns the total number of null values in this array.
@@ -192,7 +189,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// assert_eq!(array.null_count(), 2);
     /// ```
     fn null_count(&self) -> usize {
-        self.data_ref().null_count()
+        self.data().null_count()
     }
 
     /// Returns the total number of bytes of memory occupied by the buffers owned by this array.

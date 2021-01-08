@@ -30,14 +30,14 @@ fn generic_substring<OffsetSize: StringOffsetSizeTrait>(
     length: &Option<OffsetSize>,
 ) -> Result<ArrayRef> {
     // compute current offsets
-    let offsets = array.data_ref().clone().buffers()[0].clone();
+    let offsets = array.data().clone().buffers()[0].clone();
     let offsets: &[OffsetSize] = unsafe { offsets.typed_data::<OffsetSize>() };
 
     // compute null bitmap (copy)
-    let null_bit_buffer = array.data_ref().null_buffer().cloned();
+    let null_bit_buffer = array.data().null_buffer().cloned();
 
     // compute values
-    let values = &array.data_ref().buffers()[1];
+    let values = &array.data().buffers()[1];
     let data = values.as_slice();
 
     let mut new_values = Vec::new(); // we have no way to estimate how much this will be.

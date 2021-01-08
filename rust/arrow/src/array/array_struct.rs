@@ -166,17 +166,8 @@ impl Array for StructArray {
         self
     }
 
-    fn data(&self) -> ArrayDataRef {
-        self.data.clone()
-    }
-
-    fn data_ref(&self) -> &ArrayDataRef {
+    fn data(&self) -> &ArrayDataRef {
         &self.data
-    }
-
-    /// Returns the length (i.e., number of elements) of this array
-    fn len(&self) -> usize {
-        self.data_ref().len()
     }
 
     /// Returns the total number of bytes of memory occupied by the buffers owned by this [StructArray].
@@ -210,7 +201,7 @@ impl From<Vec<(Field, ArrayRef)>> for StructArray {
         }
 
         let data = ArrayData::builder(DataType::Struct(field_types))
-            .child_data(field_values.into_iter().map(|a| a.data()).collect())
+            .child_data(field_values.into_iter().map(|a| a.data().clone()).collect())
             .len(length)
             .build();
         Self::from(data)
@@ -257,7 +248,7 @@ impl From<(Vec<(Field, ArrayRef)>, Buffer)> for StructArray {
 
         let data = ArrayData::builder(DataType::Struct(field_types))
             .null_bit_buffer(pair.1)
-            .child_data(field_values.into_iter().map(|a| a.data()).collect())
+            .child_data(field_values.into_iter().map(|a| a.data().clone()).collect())
             .len(length)
             .build();
         Self::from(data)
@@ -282,8 +273,10 @@ mod tests {
 
     #[test]
     fn test_struct_array_builder() {
-        let boolean_data = BooleanArray::from(vec![false, false, true, true]).data();
-        let int_data = Int64Array::from(vec![42, 28, 19, 31]).data();
+        let boolean_data = BooleanArray::from(vec![false, false, true, true])
+            .data()
+            .clone();
+        let int_data = Int64Array::from(vec![42, 28, 19, 31]).data().clone();
 
         let fields = vec![
             Field::new("a", DataType::Boolean, false),
@@ -296,8 +289,8 @@ mod tests {
             .build();
         let struct_array = StructArray::from(struct_array_data);
 
-        assert_eq!(boolean_data, struct_array.column(0).data());
-        assert_eq!(int_data, struct_array.column(1).data());
+        assert_eq!(&boolean_data, struct_array.column(0).data());
+        assert_eq!(&int_data, struct_array.column(1).data());
     }
 
     #[test]
@@ -360,7 +353,7 @@ mod tests {
             .add_buffer(Buffer::from(&[1, 2, 0, 4].to_byte_slice()))
             .build();
 
-        assert_eq!(expected_string_data, arr.column(0).data());
+        assert_eq!(&expected_string_data, arr.column(0).data());
 
         // TODO: implement equality for ArrayData
         assert_eq!(expected_int_data.len(), arr.column(1).data().len());
@@ -455,8 +448,8 @@ mod tests {
         assert!(struct_array.is_valid(2));
         assert!(struct_array.is_null(3));
         assert!(struct_array.is_valid(4));
-        assert_eq!(boolean_data, struct_array.column(0).data());
-        assert_eq!(int_data, struct_array.column(1).data());
+        assert_eq!(&boolean_data, struct_array.column(0).data());
+        assert_eq!(&int_data, struct_array.column(1).data());
 
         let c0 = struct_array.column(0);
         let c0 = c0.as_any().downcast_ref::<BooleanArray>().unwrap();

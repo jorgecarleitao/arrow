@@ -882,7 +882,7 @@ impl Decoder {
         });
         let valid_len = cur_offset.to_usize().unwrap();
         let array_data = match list_field.data_type() {
-            DataType::Null => NullArray::new(valid_len).data(),
+            DataType::Null => NullArray::new(valid_len).data().clone(),
             DataType::Boolean => {
                 let num_bytes = bit_util::ceil(valid_len, 8);
                 let mut bool_values =
@@ -943,20 +943,22 @@ impl Decoder {
             DataType::Utf8 => {
                 StringArray::from_iter(flatten_json_string_values(rows).into_iter())
                     .data()
+                    .clone()
             }
             DataType::LargeUtf8 => {
                 LargeStringArray::from_iter(flatten_json_string_values(rows).into_iter())
                     .data()
+                    .clone()
             }
             DataType::List(field) => {
                 let child = self
                     .build_nested_list_array::<i32>(&flatten_json_values(rows), field)?;
-                child.data()
+                child.data().clone()
             }
             DataType::LargeList(field) => {
                 let child = self
                     .build_nested_list_array::<i64>(&flatten_json_values(rows), field)?;
-                child.data()
+                child.data().clone()
             }
             DataType::Struct(fields) => {
                 // extract list values, with non-lists converted to Value::Null
@@ -990,7 +992,7 @@ impl Decoder {
                 ArrayDataBuilder::new(data_type)
                     .len(rows.len())
                     .null_bit_buffer(buf)
-                    .child_data(arrays.into_iter().map(|a| a.data()).collect())
+                    .child_data(arrays.into_iter().map(|a| a.data().clone()).collect())
                     .build()
             }
             datatype => {
@@ -1193,7 +1195,9 @@ impl Decoder {
                         let data = ArrayDataBuilder::new(data_type)
                             .len(len)
                             .null_bit_buffer(null_buffer.into())
-                            .child_data(arrays.into_iter().map(|a| a.data()).collect())
+                            .child_data(
+                                arrays.into_iter().map(|a| a.data().clone()).collect(),
+                            )
                             .build();
                         Ok(make_array(data))
                     }
@@ -1262,7 +1266,7 @@ impl Decoder {
             })
             .collect::<Vec<Option<T::Native>>>();
         let array = PrimitiveArray::<T>::from_iter(values.iter());
-        array.data()
+        array.data().clone()
     }
 }
 
@@ -1900,7 +1904,7 @@ mod tests {
                 None,
                 Some(false),
             ]);
-            assert_eq!(cc.data_ref(), cc_expected.data_ref());
+            assert_eq!(cc.data(), cc_expected.data());
 
             let dd: &ListArray = batch
                 .column(d.0)
@@ -1950,13 +1954,13 @@ mod tests {
         let d = StringArray::from(vec![Some("text"), None, Some("text"), None]);
         let c = ArrayDataBuilder::new(c_field.data_type().clone())
             .len(4)
-            .add_child_data(d.data())
+            .add_child_data(d.data().clone())
             .null_bit_buffer(Buffer::from(vec![0b00000101]))
             .build();
         let b = BooleanArray::from(vec![Some(true), Some(false), Some(true), None]);
         let a = ArrayDataBuilder::new(a_field.data_type().clone())
             .len(4)
-            .add_child_data(b.data())
+            .add_child_data(b.data().clone())
             .add_child_data(c)
             .null_bit_buffer(Buffer::from(vec![0b00000111]))
             .build();
@@ -1966,7 +1970,7 @@ mod tests {
         let batch = reader.next().unwrap().unwrap();
         let read = batch.column(0);
         assert!(
-            expected.data_ref() == read.data_ref(),
+            expected.data() == read.data(),
             format!("{:?} != {:?}", expected.data(), read.data())
         );
     }
@@ -2011,7 +2015,7 @@ mod tests {
         ]);
         let c = ArrayDataBuilder::new(c_field.data_type().clone())
             .len(7)
-            .add_child_data(d.data())
+            .add_child_data(d.data().clone())
             .null_bit_buffer(Buffer::from(vec![0b00111011]))
             .build();
         let b = BooleanArray::from(vec![
@@ -2025,7 +2029,7 @@ mod tests {
         ]);
         let a = ArrayDataBuilder::new(a_struct_field.data_type().clone())
             .len(7)
-            .add_child_data(b.data())
+            .add_child_data(b.data().clone())
             .add_child_data(c.clone())
             .null_bit_buffer(Buffer::from(vec![0b00111111]))
             .build();
@@ -2073,14 +2077,14 @@ mod tests {
         );
         // test struct's fields
         let read_b = struct_array.column(0);
-        assert_eq!(b.data_ref(), read_b.data_ref());
+        assert_eq!(b.data(), read_b.data());
         let read_c = struct_array.column(1);
-        assert_eq!(&c, read_c.data_ref());
+        assert_eq!(&c, read_c.data());
         let read_c: &StructArray = read_c.as_any().downcast_ref::<StructArray>().unwrap();
         let read_d = read_c.column(0);
-        assert_eq!(d.data_ref(), read_d.data_ref());
+        assert_eq!(d.data(), read_d.data());
 
-        assert_eq!(read.data_ref(), expected.data_ref());
+        assert_eq!(read.data(), expected.data());
     }
 
     #[test]
