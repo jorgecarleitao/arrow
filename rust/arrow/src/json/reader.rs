@@ -505,6 +505,35 @@ pub struct Decoder {
     batch_size: usize,
 }
 
+fn values_to_vec(value: &Value) -> Result<Vec<Option<String>>> {
+    // value can be an array or a scalar
+    if let Value::String(v) = value {
+        Ok(vec![Some(v.to_string())])
+    } else if let Value::Array(n) = value {
+        Ok(n.iter()
+            .map(|v: &Value| {
+                if v.is_string() {
+                    Some(v.as_str().unwrap().to_string())
+                } else if v.is_array() || v.is_object() || v.is_null() {
+                    // implicitly drop nested values
+                    // TODO support deep-nesting
+                    None
+                } else {
+                    Some(v.to_string())
+                }
+            })
+            .collect())
+    } else if let Value::Null = value {
+        Ok(vec![None])
+    } else if !value.is_object() {
+        Ok(vec![Some(value.to_string())])
+    } else {
+        Err(ArrowError::JsonError(
+            "Only scalars are currently supported in JSON arrays".to_string(),
+        ))
+    }
+}
+
 impl Decoder {
     /// Create a new JSON decoder from any value that implements the `Iterator<Item=Result<Value>>`
     /// trait.
@@ -658,109 +687,59 @@ impl Decoder {
     }
 
     #[inline(always)]
-    fn list_array_string_array_builder<DICT_TY>(
+    fn list_array_string_array_builder<T>(
         &self,
         data_type: &DataType,
         col_name: &str,
         rows: &[Value],
     ) -> Result<ArrayRef>
     where
-        DICT_TY: ArrowPrimitiveType + ArrowDictionaryKeyType,
+        T: ArrowDictionaryKeyType,
     {
-        let mut builder: Box<dyn ArrayBuilder> = match data_type {
+        match data_type {
             DataType::Utf8 => {
                 let values_builder = StringBuilder::new(rows.len() * 5);
-                Box::new(ListBuilder::new(values_builder))
-            }
-            DataType::Dictionary(_, _) => {
-                let values_builder =
-                    self.build_string_dictionary_builder::<DICT_TY>(rows.len() * 5)?;
-                Box::new(ListBuilder::new(values_builder))
-            }
-            e => {
-                return Err(ArrowError::JsonError(format!(
-                    "Nested list data builder type is not supported: {:?}",
-                    e
-                )))
-            }
-        };
+                let mut builder = ListBuilder::new(values_builder);
 
-        for row in rows {
-            if let Some(value) = row.get(col_name) {
-                // value can be an array or a scalar
-                let vals: Vec<Option<String>> = if let Value::String(v) = value {
-                    vec![Some(v.to_string())]
-                } else if let Value::Array(n) = value {
-                    n.iter()
-                        .map(|v: &Value| {
-                            if v.is_string() {
-                                Some(v.as_str().unwrap().to_string())
-                            } else if v.is_array() || v.is_object() || v.is_null() {
-                                // implicitly drop nested values
-                                // TODO support deep-nesting
-                                None
-                            } else {
-                                Some(v.to_string())
-                            }
-                        })
-                        .collect()
-                } else if let Value::Null = value {
-                    vec![None]
-                } else if !value.is_object() {
-                    vec![Some(value.to_string())]
-                } else {
-                    return Err(ArrowError::JsonError(
-                        "Only scalars are currently supported in JSON arrays".to_string(),
-                    ));
-                };
-
-                // TODO: ARROW-10335: APIs of dictionary arrays and others are different. Unify
-                // them.
-                match data_type {
-                    DataType::Utf8 => {
-                        let builder = builder
-                            .as_any_mut()
-                            .downcast_mut::<ListBuilder<StringBuilder>>()
-                            .ok_or_else(||ArrowError::JsonError(
-                                "Cast failed for ListBuilder<StringBuilder> during nested data parsing".to_string(),
-                            ))?;
-                        for val in vals {
+                for row in rows {
+                    if let Some(value) = row.get(col_name) {
+                        let values = values_to_vec(value)?;
+                        for val in values {
                             if let Some(v) = val {
                                 builder.values().append_value(&v)?
                             } else {
                                 builder.values().append_null()?
                             };
                         }
-
-                        // Append to the list
                         builder.append(true)?;
-                    }
-                    DataType::Dictionary(_, _) => {
-                        let builder = builder.as_any_mut().downcast_mut::<ListBuilder<StringDictionaryBuilder<DICT_TY>>>().ok_or_else(||ArrowError::JsonError(
-                            "Cast failed for ListBuilder<StringDictionaryBuilder> during nested data parsing".to_string(),
-                        ))?;
-                        for val in vals {
-                            if let Some(v) = val {
-                                let _ = builder.values().append(&v)?;
-                            } else {
-                                builder.values().append_null()?
-                            };
-                        }
-
-                        // Append to the list
-                        builder.append(true)?;
-                    }
-                    e => {
-                        return Err(ArrowError::JsonError(format!(
-                            "Nested list data builder type is not supported: {:?}",
-                            e
-                        )))
                     }
                 }
+                Ok(Arc::new(builder.finish()))
             }
+            DataType::Dictionary(_, _) => {
+                let values_builder =
+                    self.build_string_dictionary_builder::<T>(rows.len() * 5)?;
+                let mut builder = ListBuilder::new(values_builder);
+                for row in rows {
+                    if let Some(value) = row.get(col_name) {
+                        let values = values_to_vec(value)?;
+                        for val in values {
+                            if let Some(v) = val {
+                                builder.values().append(&v)?;
+                            } else {
+                                builder.values().append_null()?;
+                            };
+                        }
+                        builder.append(true)?;
+                    }
+                }
+                Ok(Arc::new(builder.finish()))
+            }
+            e => Err(ArrowError::JsonError(format!(
+                "Nested list data builder type is not supported: {:?}",
+                e
+            ))),
         }
-
-        Ok(builder.finish() as ArrayRef)
     }
 
     #[inline(always)]
