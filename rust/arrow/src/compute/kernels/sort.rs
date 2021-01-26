@@ -26,7 +26,6 @@ use crate::error::{ArrowError, Result};
 
 use crate::buffer::MutableBuffer;
 use num::ToPrimitive;
-use std::sync::Arc;
 use TimeUnit::*;
 
 /// Sort the `ArrayRef` using `SortOptions`.
@@ -303,7 +302,7 @@ fn sort_boolean(
         result_slice[valids_len..].copy_from_slice(nulls.as_slice())
     }
 
-    let result_data = Arc::new(ArrayData::new(
+    let result_data = ArrayData::new(
         DataType::UInt32,
         values.len(),
         Some(0),
@@ -311,7 +310,7 @@ fn sort_boolean(
         0,
         vec![result.into()],
         vec![],
-    ));
+    );
 
     Ok(UInt32Array::from(result_data))
 }
@@ -369,7 +368,7 @@ where
         result_slice[valids_len..].copy_from_slice(nulls.as_slice())
     }
 
-    let result_data = Arc::new(ArrayData::new(
+    let result_data = ArrayData::new(
         DataType::UInt32,
         values.len(),
         Some(0),
@@ -377,7 +376,7 @@ where
         0,
         vec![result.into()],
         vec![],
-    ));
+    );
 
     Ok(UInt32Array::from(result_data))
 }
@@ -633,7 +632,7 @@ pub fn lexsort_to_indices(columns: &[SortColumn]) -> Result<UInt32Array> {
     let flat_columns = columns
         .iter()
         .map(
-            |column| -> Result<(&ArrayDataRef, DynComparator, SortOptions)> {
+            |column| -> Result<(&ArrayData, DynComparator, SortOptions)> {
                 // flatten and convert build comparators
                 // use ArrayData for is_valid checks later to avoid dynamic call
                 let values = column.values.as_ref();
@@ -645,7 +644,7 @@ pub fn lexsort_to_indices(columns: &[SortColumn]) -> Result<UInt32Array> {
                 ))
             },
         )
-        .collect::<Result<Vec<(&ArrayDataRef, DynComparator, SortOptions)>>>()?;
+        .collect::<Result<Vec<(&ArrayData, DynComparator, SortOptions)>>>()?;
 
     let lex_comparator = |a_idx: &usize, b_idx: &usize| -> Ordering {
         for (data, comparator, sort_option) in flat_columns.iter() {
