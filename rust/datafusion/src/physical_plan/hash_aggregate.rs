@@ -77,6 +77,8 @@ pub struct HashAggregateExec {
     group_expr: Vec<(Arc<dyn PhysicalExpr>, String)>,
     /// Aggregate expressions
     aggr_expr: Vec<Arc<dyn AggregateExpr>>,
+    /// Input expressions
+    expressions: Vec<Vec<Arc<dyn PhysicalExpr>>>,
     /// Input plan
     input: Arc<dyn ExecutionPlan>,
     /// Schema after the aggregate is applied
@@ -128,10 +130,14 @@ impl HashAggregateExec {
 
         let schema = Arc::new(schema);
 
+        let expressions = aggregate_expressions(&aggr_expr, &mode)
+            .map_err(DataFusionError::into_arrow_external_error)?;
+
         Ok(HashAggregateExec {
             mode,
             group_expr,
             aggr_expr,
+            expressions,
             input,
             schema,
         })
@@ -194,6 +200,7 @@ impl ExecutionPlan for HashAggregateExec {
                 self.mode,
                 self.schema.clone(),
                 self.aggr_expr.clone(),
+                self.expressions.clone(),
                 input,
             )))
         } else {
@@ -665,12 +672,10 @@ async fn compute_hash_aggregate(
     mode: AggregateMode,
     schema: SchemaRef,
     aggr_expr: Vec<Arc<dyn AggregateExpr>>,
+    expressions: Vec<Vec<Arc<dyn PhysicalExpr>>>,
     mut input: SendableRecordBatchStream,
 ) -> ArrowResult<RecordBatch> {
     let mut accumulators = create_accumulators(&aggr_expr)
-        .map_err(DataFusionError::into_arrow_external_error)?;
-
-    let expressions = aggregate_expressions(&aggr_expr, &mode)
         .map_err(DataFusionError::into_arrow_external_error)?;
 
     let expressions = Arc::new(expressions);
@@ -695,6 +700,7 @@ impl HashAggregateStream {
         mode: AggregateMode,
         schema: SchemaRef,
         aggr_expr: Vec<Arc<dyn AggregateExpr>>,
+        expressions: Vec<Vec<Arc<dyn PhysicalExpr>>>,
         input: SendableRecordBatchStream,
     ) -> Self {
         let (tx, rx) = futures::channel::oneshot::channel();
@@ -702,7 +708,8 @@ impl HashAggregateStream {
         let schema_clone = schema.clone();
         tokio::spawn(async move {
             let result =
-                compute_hash_aggregate(mode, schema_clone, aggr_expr, input).await;
+                compute_hash_aggregate(mode, schema_clone, aggr_expr, expressions, input)
+                    .await;
             tx.send(result)
         });
 
