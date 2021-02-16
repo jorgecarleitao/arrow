@@ -26,7 +26,7 @@ use crate::{
 use arrow::temporal_conversions::timestamp_ns_to_datetime;
 use arrow::{
     array::{
-        Array, GenericStringArray, PrimitiveArray, StringOffsetSizeTrait,
+        Array, GenericStringArray, PrimitiveArray, OffsetSizeTrait,
         TimestampNanosecondArray,
     },
     datatypes::{ArrowPrimitiveType, DataType, TimestampNanosecondType},
@@ -191,7 +191,7 @@ pub(crate) fn unary_string_to_primitive_function<'a, T, O, F>(
 ) -> Result<PrimitiveArray<O>>
 where
     O: ArrowPrimitiveType,
-    T: StringOffsetSizeTrait,
+    T: OffsetSizeTrait,
     F: Fn(&'a str) -> Result<O::Native>,
 {
     if args.len() != 1 {

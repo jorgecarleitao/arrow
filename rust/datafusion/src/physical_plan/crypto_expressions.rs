@@ -30,7 +30,7 @@ use crate::{
     scalar::ScalarValue,
 };
 use arrow::{
-    array::{Array, BinaryArray, GenericStringArray, StringOffsetSizeTrait},
+    array::{Array, BinaryArray, GenericStringArray, OffsetSizeTrait},
     datatypes::DataType,
 };
 
@@ -69,7 +69,7 @@ fn unary_binary_function<T, R, F>(
 ) -> Result<BinaryArray>
 where
     R: AsRef<[u8]>,
-    T: StringOffsetSizeTrait,
+    T: OffsetSizeTrait,
     F: Fn(&str) -> R,
 {
     if args.len() != 1 {
@@ -138,7 +138,7 @@ where
     }
 }
 
-fn md5_array<T: StringOffsetSizeTrait>(
+fn md5_array<T: OffsetSizeTrait>(
     args: &[&dyn Array],
 ) -> Result<GenericStringArray<i32>> {
     unary_string_function::<T, i32, _, _>(args, md5_process, "md5")

@@ -24,7 +24,7 @@ use crate::{
     scalar::ScalarValue,
 };
 use arrow::{
-    array::{Array, GenericStringArray, StringArray, StringOffsetSizeTrait},
+    array::{Array, GenericStringArray, StringArray, OffsetSizeTrait},
     datatypes::DataType,
 };
 
@@ -43,8 +43,8 @@ pub(crate) fn unary_string_function<'a, T, O, F, R>(
 ) -> Result<GenericStringArray<O>>
 where
     R: AsRef<str>,
-    O: StringOffsetSizeTrait,
-    T: StringOffsetSizeTrait,
+    O: OffsetSizeTrait,
+    T: OffsetSizeTrait,
     F: Fn(&'a str) -> R,
 {
     if args.len() != 1 {
