@@ -71,7 +71,7 @@ where
 
 fn compare_string<'a, T>(left: &'a Array, right: &'a Array) -> DynComparator<'a>
 where
-    T: StringOffsetSizeTrait,
+    T: OffsetSizeTrait,
 {
     let left = left
         .as_any()

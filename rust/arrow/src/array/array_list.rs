@@ -31,12 +31,19 @@ use crate::datatypes::*;
 
 /// trait declaring an offset size, relevant for i32 vs i64 array types.
 pub trait OffsetSizeTrait: ArrowNativeType + Num + Ord + std::ops::AddAssign {
+    fn is_large() -> bool;
+
     fn prefix() -> &'static str;
 
     fn to_isize(&self) -> isize;
 }
 
 impl OffsetSizeTrait for i32 {
+    #[inline]
+    fn is_large() -> bool {
+        false
+    }
+
     fn prefix() -> &'static str {
         ""
     }
@@ -47,6 +54,11 @@ impl OffsetSizeTrait for i32 {
 }
 
 impl OffsetSizeTrait for i64 {
+    #[inline]
+    fn is_large() -> bool {
+        true
+    }
+
     fn prefix() -> &'static str {
         "Large"
     }

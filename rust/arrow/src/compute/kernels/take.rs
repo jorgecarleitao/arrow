@@ -413,7 +413,7 @@ fn take_string<OffsetSize, IndexType>(
     indices: &PrimitiveArray<IndexType>,
 ) -> Result<GenericStringArray<OffsetSize>>
 where
-    OffsetSize: Zero + AddAssign + StringOffsetSizeTrait,
+    OffsetSize: Zero + AddAssign + OffsetSizeTrait,
     IndexType: ArrowNumericType,
     IndexType::Native: ToPrimitive,
 {
@@ -510,7 +510,13 @@ where
         };
     }
 
-    let mut data = ArrayData::builder(<OffsetSize as StringOffsetSizeTrait>::DATA_TYPE)
+    let data_type = if OffsetSize::is_large() {
+        DataType::LargeUtf8
+    } else {
+        DataType::Utf8
+    };
+
+    let mut data = ArrayData::builder(data_type)
         .len(data_len)
         .add_buffer(offsets_buffer.into())
         .add_buffer(values.into());

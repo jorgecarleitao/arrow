@@ -637,9 +637,8 @@ impl ArrowArray {
 mod tests {
     use super::*;
     use crate::array::{
-        make_array, Array, ArrayData, BinaryOffsetSizeTrait, BooleanArray,
-        GenericBinaryArray, GenericStringArray, Int32Array, StringOffsetSizeTrait,
-        Time32MillisecondArray,
+        make_array, Array, ArrayData, BooleanArray, GenericBinaryArray,
+        GenericStringArray, Int32Array, OffsetSizeTrait, Time32MillisecondArray,
     };
     use crate::compute::kernels;
     use std::convert::TryFrom;
@@ -669,7 +668,7 @@ mod tests {
     }
     // case with nulls is tested in the docs, through the example on this module.
 
-    fn test_generic_string<Offset: StringOffsetSizeTrait>() -> Result<()> {
+    fn test_generic_string<Offset: OffsetSizeTrait>() -> Result<()> {
         // create an array natively
         let array =
             GenericStringArray::<Offset>::from(vec![Some("a"), None, Some("aaa")]);
@@ -713,7 +712,7 @@ mod tests {
         test_generic_string::<i64>()
     }
 
-    fn test_generic_binary<Offset: BinaryOffsetSizeTrait>() -> Result<()> {
+    fn test_generic_binary<Offset: OffsetSizeTrait>() -> Result<()> {
         // create an array natively
         let array: Vec<Option<&[u8]>> = vec![Some(b"a"), None, Some(b"aaa")];
         let array = GenericBinaryArray::<Offset>::from(array);

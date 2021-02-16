@@ -18,9 +18,8 @@
 use crate::datatypes::ArrowPrimitiveType;
 
 use super::{
-    Array, ArrayRef, BinaryOffsetSizeTrait, BooleanArray, GenericBinaryArray,
-    GenericListArray, GenericStringArray, OffsetSizeTrait, PrimitiveArray,
-    StringOffsetSizeTrait,
+    Array, ArrayRef, BooleanArray, GenericBinaryArray, GenericListArray,
+    GenericStringArray, OffsetSizeTrait, PrimitiveArray,
 };
 
 /// an iterator that returns Some(T) or None, that can be used on any PrimitiveArray
@@ -152,14 +151,14 @@ impl<'a> std::iter::ExactSizeIterator for BooleanIter<'a> {}
 #[derive(Debug)]
 pub struct GenericStringIter<'a, T>
 where
-    T: StringOffsetSizeTrait,
+    T: OffsetSizeTrait,
 {
     array: &'a GenericStringArray<T>,
     i: usize,
     len: usize,
 }
 
-impl<'a, T: StringOffsetSizeTrait> GenericStringIter<'a, T> {
+impl<'a, T: OffsetSizeTrait> GenericStringIter<'a, T> {
     /// create a new iterator
     pub fn new(array: &'a GenericStringArray<T>) -> Self {
         GenericStringIter::<T> {
@@ -170,7 +169,7 @@ impl<'a, T: StringOffsetSizeTrait> GenericStringIter<'a, T> {
     }
 }
 
-impl<'a, T: StringOffsetSizeTrait> std::iter::Iterator for GenericStringIter<'a, T> {
+impl<'a, T: OffsetSizeTrait> std::iter::Iterator for GenericStringIter<'a, T> {
     type Item = Option<&'a str>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -192,23 +191,20 @@ impl<'a, T: StringOffsetSizeTrait> std::iter::Iterator for GenericStringIter<'a,
 }
 
 /// all arrays have known size.
-impl<'a, T: StringOffsetSizeTrait> std::iter::ExactSizeIterator
-    for GenericStringIter<'a, T>
-{
-}
+impl<'a, T: OffsetSizeTrait> std::iter::ExactSizeIterator for GenericStringIter<'a, T> {}
 
 /// an iterator that returns `Some(&[u8])` or `None`, for binary arrays
 #[derive(Debug)]
 pub struct GenericBinaryIter<'a, T>
 where
-    T: BinaryOffsetSizeTrait,
+    T: OffsetSizeTrait,
 {
     array: &'a GenericBinaryArray<T>,
     i: usize,
     len: usize,
 }
 
-impl<'a, T: BinaryOffsetSizeTrait> GenericBinaryIter<'a, T> {
+impl<'a, T: OffsetSizeTrait> GenericBinaryIter<'a, T> {
     /// create a new iterator
     pub fn new(array: &'a GenericBinaryArray<T>) -> Self {
         GenericBinaryIter::<T> {
@@ -219,7 +215,7 @@ impl<'a, T: BinaryOffsetSizeTrait> GenericBinaryIter<'a, T> {
     }
 }
 
-impl<'a, T: BinaryOffsetSizeTrait> std::iter::Iterator for GenericBinaryIter<'a, T> {
+impl<'a, T: OffsetSizeTrait> std::iter::Iterator for GenericBinaryIter<'a, T> {
     type Item = Option<&'a [u8]>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -282,10 +278,7 @@ impl<'a, S: OffsetSizeTrait> std::iter::Iterator for GenericListArrayIter<'a, S>
 }
 
 /// all arrays have known size.
-impl<'a, T: BinaryOffsetSizeTrait> std::iter::ExactSizeIterator
-    for GenericBinaryIter<'a, T>
-{
-}
+impl<'a, T: OffsetSizeTrait> std::iter::ExactSizeIterator for GenericBinaryIter<'a, T> {}
 
 #[cfg(test)]
 mod tests {

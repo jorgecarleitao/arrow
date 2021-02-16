@@ -25,7 +25,7 @@ use crate::{
 use std::sync::Arc;
 
 #[allow(clippy::unnecessary_wraps)]
-fn generic_substring<OffsetSize: StringOffsetSizeTrait>(
+fn generic_substring<OffsetSize: OffsetSizeTrait>(
     array: &GenericStringArray<OffsetSize>,
     start: OffsetSize,
     length: &Option<OffsetSize>,
@@ -75,8 +75,14 @@ fn generic_substring<OffsetSize: StringOffsetSizeTrait>(
         new_values.extend_from_slice(&data[start..start + length]);
     });
 
+    let data_type = if OffsetSize::is_large() {
+        DataType::LargeUtf8
+    } else {
+        DataType::Utf8
+    };
+
     let data = ArrayData::new(
-        <OffsetSize as StringOffsetSizeTrait>::DATA_TYPE,
+        data_type,
         array.len(),
         None,
         null_bit_buffer,

@@ -109,7 +109,7 @@ where
     compare_op_scalar!(left, right, op)
 }
 
-pub fn like_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn like_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
@@ -161,7 +161,7 @@ fn is_like_pattern(c: char) -> bool {
     c == '%' || c == '_'
 }
 
-pub fn like_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn like_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
@@ -223,7 +223,7 @@ pub fn like_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
     Ok(BooleanArray::from(Arc::new(data)))
 }
 
-pub fn nlike_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn nlike_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
@@ -271,7 +271,7 @@ pub fn nlike_utf8<OffsetSize: StringOffsetSizeTrait>(
     Ok(BooleanArray::from(Arc::new(data)))
 }
 
-pub fn nlike_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn nlike_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
@@ -320,84 +320,84 @@ pub fn nlike_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
     Ok(BooleanArray::from(Arc::new(data)))
 }
 
-pub fn eq_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn eq_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
     compare_op!(left, right, |a, b| a == b)
 }
 
-pub fn eq_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn eq_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
     compare_op_scalar!(left, right, |a, b| a == b)
 }
 
-pub fn neq_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn neq_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
     compare_op!(left, right, |a, b| a != b)
 }
 
-pub fn neq_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn neq_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
     compare_op_scalar!(left, right, |a, b| a != b)
 }
 
-pub fn lt_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn lt_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
     compare_op!(left, right, |a, b| a < b)
 }
 
-pub fn lt_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn lt_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
     compare_op_scalar!(left, right, |a, b| a < b)
 }
 
-pub fn lt_eq_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn lt_eq_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
     compare_op!(left, right, |a, b| a <= b)
 }
 
-pub fn lt_eq_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn lt_eq_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
     compare_op_scalar!(left, right, |a, b| a <= b)
 }
 
-pub fn gt_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn gt_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
     compare_op!(left, right, |a, b| a > b)
 }
 
-pub fn gt_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn gt_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
     compare_op_scalar!(left, right, |a, b| a > b)
 }
 
-pub fn gt_eq_utf8<OffsetSize: StringOffsetSizeTrait>(
+pub fn gt_eq_utf8<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &GenericStringArray<OffsetSize>,
 ) -> Result<BooleanArray> {
     compare_op!(left, right, |a, b| a >= b)
 }
 
-pub fn gt_eq_utf8_scalar<OffsetSize: StringOffsetSizeTrait>(
+pub fn gt_eq_utf8_scalar<OffsetSize: OffsetSizeTrait>(
     left: &GenericStringArray<OffsetSize>,
     right: &str,
 ) -> Result<BooleanArray> {
@@ -785,7 +785,7 @@ pub fn contains_utf8<OffsetSize>(
     right: &ListArray,
 ) -> Result<BooleanArray>
 where
-    OffsetSize: StringOffsetSizeTrait,
+    OffsetSize: OffsetSizeTrait,
 {
     let left_len = left.len();
     if left_len != right.len() {

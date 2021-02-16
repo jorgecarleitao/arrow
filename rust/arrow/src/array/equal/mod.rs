@@ -20,10 +20,9 @@
 //! depend on dynamic casting of `Array`.
 
 use super::{
-    Array, ArrayData, BinaryOffsetSizeTrait, BooleanArray, DecimalArray,
-    FixedSizeBinaryArray, FixedSizeListArray, GenericBinaryArray, GenericListArray,
-    GenericStringArray, NullArray, OffsetSizeTrait, PrimitiveArray,
-    StringOffsetSizeTrait, StructArray,
+    Array, ArrayData, BooleanArray, DecimalArray, FixedSizeBinaryArray,
+    FixedSizeListArray, GenericBinaryArray, GenericListArray, GenericStringArray,
+    NullArray, OffsetSizeTrait, PrimitiveArray, StructArray,
 };
 
 use crate::{
@@ -87,13 +86,13 @@ impl PartialEq for BooleanArray {
     }
 }
 
-impl<OffsetSize: StringOffsetSizeTrait> PartialEq for GenericStringArray<OffsetSize> {
+impl<OffsetSize: OffsetSizeTrait> PartialEq for GenericStringArray<OffsetSize> {
     fn eq(&self, other: &Self) -> bool {
         equal(self.data().as_ref(), other.data().as_ref())
     }
 }
 
-impl<OffsetSize: BinaryOffsetSizeTrait> PartialEq for GenericBinaryArray<OffsetSize> {
+impl<OffsetSize: OffsetSizeTrait> PartialEq for GenericBinaryArray<OffsetSize> {
     fn eq(&self, other: &Self) -> bool {
         equal(self.data().as_ref(), other.data().as_ref())
     }
@@ -290,10 +289,10 @@ mod tests {
     use std::sync::Arc;
 
     use crate::array::{
-        array::Array, ArrayDataBuilder, ArrayDataRef, ArrayRef, BinaryOffsetSizeTrait,
-        BooleanArray, DecimalBuilder, FixedSizeBinaryBuilder, FixedSizeListBuilder,
-        GenericBinaryArray, Int32Builder, ListBuilder, NullArray, PrimitiveBuilder,
-        StringArray, StringDictionaryBuilder, StringOffsetSizeTrait, StructArray,
+        array::Array, ArrayDataBuilder, ArrayDataRef, ArrayRef, BooleanArray,
+        DecimalBuilder, FixedSizeBinaryBuilder, FixedSizeListBuilder, GenericBinaryArray,
+        Int32Builder, ListBuilder, NullArray, OffsetSizeTrait, PrimitiveBuilder,
+        StringArray, StringDictionaryBuilder, StructArray,
     };
     use crate::array::{GenericStringArray, Int32Array};
     use crate::buffer::Buffer;
@@ -508,7 +507,7 @@ mod tests {
         ]
     }
 
-    fn test_generic_string_equal<OffsetSize: StringOffsetSizeTrait>() {
+    fn test_generic_string_equal<OffsetSize: OffsetSizeTrait>() {
         let cases = binary_cases();
 
         for (lhs, rhs, expected) in cases {
@@ -530,7 +529,7 @@ mod tests {
         test_generic_string_equal::<i64>()
     }
 
-    fn test_generic_binary_equal<OffsetSize: BinaryOffsetSizeTrait>() {
+    fn test_generic_binary_equal<OffsetSize: OffsetSizeTrait>() {
         let cases = binary_cases();
 
         for (lhs, rhs, expected) in cases {
