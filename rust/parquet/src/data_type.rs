@@ -576,7 +576,7 @@ impl AsBytes for str {
     }
 }
 
-pub(crate) mod private {
+pub mod private {
     use crate::encodings::decoding::PlainDecoderDetails;
     use crate::util::bit_util::{BitReader, BitWriter};
     use crate::util::memory::ByteBufferPtr;
